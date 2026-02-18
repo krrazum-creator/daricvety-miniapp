@@ -6,10 +6,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <title>дарицветы.москва — доставка цветов</title>
 
+  <!-- telegram webapp sdk (КРИТИЧНО для initDataUnsafe.user) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
   <!-- font (тоньше) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- было: 400;600;700;800 -> стало: 300;400;500;600 -->
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
 
   <style>
@@ -28,7 +30,6 @@
 
       --radius:22px;
 
-      /* фикс высоты под telegram webapp */
       --app-h: 100vh;
     }
 
@@ -85,7 +86,6 @@
       border:1px solid rgba(0,0,0,.06);
     }
 
-    /* ===== FILTERS ===== */
     .filters{
       margin-top:6px;
       display:flex;
@@ -190,7 +190,6 @@
     }
     .qty span{min-width:20px;text-align:center;font-weight:600}
 
-    /* ===== MODAL BASE (скролл) ===== */
     .overlay{
       position:fixed;inset:0;background:rgba(0,0,0,.35);
       display:none;
@@ -239,7 +238,6 @@
       flex:1 1 auto;
     }
 
-    /* ===== PRODUCT FULLSCREEN ===== */
     #productOverlay.open{ padding:0; }
     #productOverlay .sheet{
       width:100%;
@@ -324,7 +322,6 @@
       text-transform:lowercase;
     }
 
-    /* 16px фиксит авто-zoom на iOS */
     input, select, textarea{
       font-family:inherit;
       font-size:16px;
@@ -375,7 +372,6 @@
     }
     .bottomInner .mini b{color:var(--text);font-weight:600}
 
-    /* ===== UX OVERLAY (замена alert) ===== */
     .uxOverlay{
       position:fixed;
       inset:0;
@@ -428,7 +424,6 @@
       justify-content:flex-end;
     }
 
-    /* loader в кнопке */
     .spinner{
       width:16px;height:16px;
       border-radius:999px;
@@ -615,20 +610,15 @@
   // ====== CONFIG ======
   const API_BASE = "https://script.google.com/macros/s/AKfycbzdOFj8B64mrN1q_cmdhjOkvG4KsgZZP-6b2lpfdXBQ2-JUz3juEYcr76iPrvp5lGEhbA/exec";
 
-  // поддержка
   const SUPPORT_USERNAME = "chaiori";
   const SUPPORT_URL = `https://t.me/${SUPPORT_USERNAME}`;
 
-  // фиксированные слоты на будущие дни
   const TIME_SLOTS = ["10:00-14:00","14:00-18:00","18:00-22:00"];
-
-  // динамика на сегодня: +3 часа, округление до 30 минут
   const DYNAMIC_LEAD_MINUTES = 180;
   const SLOT_STEP_MINUTES = 30;
 
-  // РАБОЧЕЕ ВРЕМЯ ДОСТАВКИ
-  const WORK_START_MINUTES = 10*60; // 10:00
-  const WORK_END_MINUTES   = 22*60; // 22:00
+  const WORK_START_MINUTES = 10*60;
+  const WORK_END_MINUTES   = 22*60;
 
   const DELIVERY_MKAD = 650;
 
@@ -639,7 +629,6 @@
   let galleryIndex = 0;
   let activeCategory = "all";
 
-  // ====== HELPERS ======
   const fmt = (n) => new Intl.NumberFormat("ru-RU").format(Number(n) || 0) + " ₽";
   const el = (id) => document.getElementById(id);
 
@@ -664,7 +653,6 @@
     return Math.ceil(min/step)*step;
   }
 
-  // СЛОТЫ: только 10:00–22:00; ночью начинаем от 10:00
   function availableSlotsForDate(dateISO){
     if (dateISO !== todayISO()) return TIME_SLOTS.slice();
 
@@ -738,14 +726,12 @@
     }
   }
 
-  // ===== стабилизация высоты webapp =====
   function setAppHeight(){
     const tg = window.Telegram?.WebApp;
     const h = (tg && tg.viewportHeight) ? tg.viewportHeight : window.innerHeight;
     document.documentElement.style.setProperty("--app-h", h + "px");
   }
 
-  // ===== UX overlay =====
   function closeUX(){ el("uxOverlay").classList.remove("open"); }
 
   function openSupport(){
@@ -800,10 +786,8 @@
   }
 
   function shortOrderCode(orderId){
-    // ORD1234567890 -> 4 последние цифры
     const digits = String(orderId || "").replace(/\D/g, "");
     if (digits.length >= 4) return digits.slice(-4);
-    // если вдруг пришло что-то другое
     return (String(orderId || "").slice(-4) || "—");
   }
 
@@ -821,7 +805,6 @@
     });
   }
 
-  // ===== GOOGLE DRIVE IMAGE =====
   function extractDriveId(s){
     if (!s) return null;
     const str = String(s);
@@ -873,7 +856,6 @@
     return (Array.isArray(arr) ? arr : []).map(x => String(x || "").trim()).filter(Boolean);
   }
 
-  // ===== FILTERS =====
   function getCategory(p){
     const raw = (p.category ?? p.wrap ?? "").toString().trim();
     return raw ? raw : "без категории";
@@ -906,7 +888,6 @@
     });
   }
 
-  // ====== UI: GRID ======
   function renderGrid(){
     const grid = el("grid");
     grid.innerHTML = "";
@@ -1008,7 +989,6 @@
     });
   }
 
-  // ====== UI: PRODUCT MODAL ======
   function openProduct(id){
     const p = products.find(x => String(x.id) === String(id));
     if (!p) return;
@@ -1108,7 +1088,6 @@
     }
   }
 
-  // ====== CART / CHECKOUT ======
   function openCart(){
     renderCart();
     el("cartOverlay").classList.add("open");
@@ -1229,7 +1208,6 @@
     el("summary").innerHTML = lines.join("");
   }
 
-  // ===== PHONE MASK + VALIDATION =====
   function onlyDigits(s){ return String(s || "").replace(/\D/g, ""); }
 
   function formatPhoneRU(value){
@@ -1307,7 +1285,7 @@
 
     const delivery_type = el("deliveryType").value;
 
-    const address = el("address").value.trim(); // не обязателен
+    const address = el("address").value.trim();
     const date = el("date").value;
     const time_slot = el("timeSlot").value;
 
@@ -1349,7 +1327,6 @@
     const payload = {
       action: "create_order",
 
-      // telegram (заполним ниже из WebApp)
       tg_user_id: 0,
       tg_username: "",
       tg_first_name: "",
@@ -1372,13 +1349,14 @@
       comment: (el("comment").value || "").trim()
     };
 
-    // Telegram WebApp context (FIX: добавили first/last)
+    // Telegram WebApp context (жёстко, через SDK)
     try{
-      if (window.Telegram && window.Telegram.WebApp){
-        const tg = window.Telegram.WebApp;
+      const tg = window.Telegram?.WebApp;
+      if (tg){
         tg.ready();
         tg.expand?.();
-        const u = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : null;
+
+        const u = tg.initDataUnsafe?.user || null;
         if (u){
           payload.tg_user_id = u.id || 0;
           payload.tg_username = u.username || "";
@@ -1391,7 +1369,6 @@
     setSubmitLoading(true);
 
     try{
-      // ВАЖНО: text/plain -> без preflight, стабильнее для GAS
       const res = await fetch(API_BASE, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -1426,7 +1403,6 @@
     }
   }
 
-  // ====== INIT ======
   async function loadProducts(){
     const url = `${API_BASE}?action=products`;
     const res = await fetch(url, { method:"GET", cache:"no-store" });
