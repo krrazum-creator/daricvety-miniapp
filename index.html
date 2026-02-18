@@ -12,16 +12,16 @@
 
   <style>
     :root{
-      --bg:#FFFDF8;                 /* тёплый белый */
+      --bg:#FFFDF8;
       --text:#1C1C1E;
       --muted:#6B6B73;
       --card:#FFFFFF;
       --stroke:rgba(0,0,0,.08);
 
-      --primary:#F6E7A1;            /* butter yellow */
+      --primary:#F6E7A1;
       --primaryActive:#F3E39A;
 
-      --secondary:#f7d8dc;          /* розовый */
+      --secondary:#f7d8dc;
       --secondaryActive:#f2c7ce;
 
       --radius:22px;
@@ -147,13 +147,18 @@
     }
     .qty span{min-width:20px;text-align:center;font-weight:900}
 
-    /* modal */
+    /* ===== MODAL BASE ===== */
     .overlay{
       position:fixed;inset:0;background:rgba(0,0,0,.35);
-      display:none;align-items:flex-end;justify-content:center;
-      padding:10px;
+      display:none;
+      justify-content:center;
+      padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+      align-items:flex-start;                 /* важно для скролла */
+      overflow-y:auto;                        /* важно для скролла */
+      -webkit-overflow-scrolling:touch;
     }
     .overlay.open{display:flex}
+
     .sheet{
       width:min(720px, 100%);
       background:var(--card);
@@ -161,11 +166,16 @@
       border:1px solid var(--stroke);
       box-shadow:0 18px 60px rgba(0,0,0,.18);
       overflow:hidden;
+      max-height:calc(100vh - 20px);         /* важно */
+      display:flex;
+      flex-direction:column;
+      margin:10px 0;
     }
     .sheetHeader{
       padding:14px 16px;
       display:flex;align-items:center;justify-content:space-between;
       border-bottom:1px solid var(--stroke);
+      flex:0 0 auto;
     }
     .sheetHeader .h{
       font-weight:900;
@@ -177,18 +187,45 @@
       font-size:20px;line-height:1;
       padding:6px 8px;border-radius:12px;
     }
-    .sheetBody{padding:14px 16px 18px}
+    .sheetBody{
+      padding:14px 16px 18px;
+      overflow-y:auto;                        /* важно */
+      -webkit-overflow-scrolling:touch;
+      flex:1 1 auto;
+    }
+
+    /* ===== PRODUCT FULLSCREEN ===== */
+    #productOverlay.open{
+      padding:0;
+    }
+    #productOverlay .sheet{
+      width:100%;
+      max-width:100%;
+      height:100vh;
+      max-height:100vh;
+      border-radius:0;
+      margin:0;
+      border:none;
+    }
+    #productOverlay .sheetBody{
+      padding:0;
+    }
 
     .gallery{
-      border-radius:var(--radius);
+      border-radius:0;
       overflow:hidden;
-      border:1px solid var(--stroke);
-      background:#f3f3f5;
+      border:none;
+      background:#000;                        /* поля выглядят ок */
       position:relative;
       user-select:none;
     }
     .gallery img{
-      width:100%;height:340px;object-fit:cover;display:block;
+      width:100%;
+      height:auto;
+      max-height:78vh;                        /* главное: пропорции */
+      object-fit:contain;                     /* НЕ обрезаем */
+      display:block;
+      margin:0 auto;
     }
     .dots{
       position:absolute;left:0;right:0;bottom:10px;
@@ -202,9 +239,10 @@
     .dot.on{background:var(--primary)}
 
     .desc{
-      margin-top:12px;
+      margin:12px 16px 0;
       color:var(--muted);
       font-size:13px;line-height:1.45;
+      padding-bottom:10px;
     }
 
     .sectionTitle{
@@ -276,7 +314,11 @@
     .bottomInner .mini b{color:var(--text);font-weight:900}
 
     .linkRow{
-      display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:10px
+      display:flex;gap:10px;justify-content:flex-end;align-items:center;margin:16px 16px 16px
+    }
+    .productFooterRow{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:0 16px 16px;
     }
   </style>
 </head>
@@ -294,7 +336,6 @@
       </div>
     </header>
 
-    <!-- ВАЖНО: каталог монтируется сюда -->
     <div class="grid" id="grid"></div>
   </div>
 
@@ -315,14 +356,16 @@
         <div class="h" id="pTitle">товар</div>
         <button class="iconBtn" id="closeProduct">✕</button>
       </div>
+
       <div class="sheetBody">
         <div class="gallery" id="gallery">
           <img id="gImg" src="" alt="" />
           <div class="dots" id="dots"></div>
         </div>
+
         <div class="desc" id="pDesc"></div>
 
-        <div class="row" style="margin-top:12px;">
+        <div class="productFooterRow">
           <p class="price" id="pPrice"></p>
           <div id="pControls"></div>
         </div>
@@ -350,6 +393,7 @@
             <label>тип доставки</label>
             <select id="deliveryType">
               <option value="mkad">москва (в пределах мкад) — 650 ₽</option>
+              <option value="pickup">самовывоз — Автозаводская 23с2</option>
               <option value="outside">за мкад — стоимость уточним</option>
             </select>
           </div>
@@ -424,8 +468,16 @@
 <script>
   // ====== CONFIG ======
   const API_BASE = "https://script.google.com/macros/s/AKfycbzdOFj8B64mrN1q_cmdhjOkvG4KsgZZP-6b2lpfdXBQ2-JUz3juEYcr76iPrvp5lGEhbA/exec";
+
+  // На будущие дни оставляем фиксированные слоты:
   const TIME_SLOTS = ["10:00-14:00","14:00-18:00","18:00-22:00"];
-  const MIN_LEAD_MINUTES = 120;
+
+  // Для "сегодня" делаем динамические слоты от текущего времени + 3 часа
+  const DYNAMIC_LEAD_MINUTES = 180;     // можно 120, если хочешь "через 2 часа"
+  const SLOT_STEP_MINUTES = 30;
+  const SLOT_WINDOW_MINUTES = 120;
+  const DAY_END_MINUTES = 22*60;
+
   const DELIVERY_MKAD = 650;
 
   // ====== STATE ======
@@ -444,25 +496,34 @@
     return tz.toISOString().slice(0,10);
   }
 
-  function startMinutes(slot){
-    const [a] = slot.split("-");
-    const [h,m] = a.split(":").map(Number);
-    return h*60 + m;
-  }
-
   function minutesNow(){
     const d = new Date();
     return d.getHours()*60 + d.getMinutes();
   }
 
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function toHM(min){
+    const h = Math.floor(min/60);
+    const m = min%60;
+    return `${pad2(h)}:${pad2(m)}`;
+  }
+  function ceilToStep(min, step){
+    return Math.ceil(min/step)*step;
+  }
+
   function availableSlotsForDate(dateISO){
+    // Для будущих дат — фиксированные интервалы:
     if (dateISO !== todayISO()) return TIME_SLOTS.slice();
+
+    // Для сегодня — динамика
     const now = minutesNow();
-    return TIME_SLOTS.filter(s => {
-      const start = startMinutes(s);
-      if (now >= start) return false;
-      return (start - now) >= MIN_LEAD_MINUTES;
-    });
+    const start = ceilToStep(now + DYNAMIC_LEAD_MINUTES, SLOT_STEP_MINUTES);
+
+    const slots = [];
+    for (let t = start; t + SLOT_WINDOW_MINUTES <= DAY_END_MINUTES; t += SLOT_STEP_MINUTES){
+      slots.push(`${toHM(t)}-${toHM(t + SLOT_WINDOW_MINUTES)}`);
+    }
+    return slots;
   }
 
   function cartCount(){
@@ -485,20 +546,18 @@
   function deliveryCost(){
     const t = el("deliveryType").value;
     if (t === "mkad") return DELIVERY_MKAD;
-    return null;
-  }
-
-  function totalCost(){
-    const sub = cartSubtotal();
-    const d = deliveryCost();
-    return sub + (d ?? 0);
+    if (t === "pickup") return 0;
+    return null; // outside
   }
 
   function renderBottom(){
     const count = cartCount();
     el("cartCount").textContent = count;
     el("bottomCount").textContent = count;
-    el("bottomTotal").textContent = fmt(totalCost());
+
+    // ВАЖНО: на главной показываем сумму БЕЗ доставки
+    el("bottomTotal").textContent = fmt(cartSubtotal());
+
     el("bottomBar").style.display = count > 0 ? "block" : "none";
   }
 
@@ -792,7 +851,7 @@
     if (slots.length === 0){
       const opt = document.createElement("option");
       opt.value = "";
-      opt.textContent = "сегодня слотов нет";
+      opt.textContent = "на выбранную дату слотов нет";
       select.appendChild(opt);
       select.disabled = true;
       return;
@@ -818,6 +877,10 @@
     if (dType === "mkad"){
       lines.push(`<div class="line"><span>доставка</span><span>${fmt(dCost)}</span></div>`);
       lines.push(`<div class="line total"><span>итого</span><span>${fmt(sub + dCost)}</span></div>`);
+    } else if (dType === "pickup"){
+      lines.push(`<div class="line"><span>самовывоз</span><span>${fmt(0)}</span></div>`);
+      lines.push(`<div class="line"><span>адрес</span><span>Автозаводская 23с2</span></div>`);
+      lines.push(`<div class="line total"><span>итого</span><span>${fmt(sub)}</span></div>`);
     } else {
       lines.push(`<div class="line"><span>доставка</span><span>уточним</span></div>`);
       lines.push(`<div class="line total"><span>итого</span><span>${fmt(sub)}</span></div>`);
@@ -841,6 +904,9 @@
 
     const customer_name = el("customerName").value.trim();
     const customer_phone = el("customerPhone").value.trim();
+
+    const delivery_type = el("deliveryType").value;
+
     const address = el("address").value.trim();
     const date = el("date").value;
     const time_slot = el("timeSlot").value;
@@ -849,11 +915,14 @@
     const recipient_name = same ? customer_name : el("recipientName").value.trim();
     const recipient_phone = same ? customer_phone : el("recipientPhone").value.trim();
 
-    if (!customer_name || !customer_phone || !recipient_name || !recipient_phone || !address || !date || !time_slot){
-      alert("проверь поля: заказчик, получатель, адрес, дата и интервал");
+    const mustHaveAddress = (delivery_type !== "pickup");
+
+    if (!customer_name || !customer_phone || !recipient_name || !recipient_phone || (mustHaveAddress && !address) || !date || !time_slot){
+      alert("проверь поля: заказчик, получатель, дата и интервал" + (mustHaveAddress ? ", адрес" : ""));
       return;
     }
 
+    // проверка слотов (и для динамики, и для фиксированных)
     const slots = availableSlotsForDate(date);
     if (!slots.includes(time_slot)){
       alert("этот интервал уже недоступен. выбери другой.");
@@ -861,7 +930,13 @@
       return;
     }
 
-    const delivery_type = el("deliveryType").value;
+    const delivery_price = (delivery_type === "mkad") ? DELIVERY_MKAD : (delivery_type === "pickup" ? 0 : "уточним");
+
+    let finalAddress = address;
+    if (delivery_type === "pickup"){
+      finalAddress = "Самовывоз: Автозаводская 23с2";
+    }
+
     const payload = {
       action: "create_order",
       tg_user_id: 0,
@@ -871,17 +946,17 @@
       recipient_name,
       recipient_phone,
       same_as_customer: same,
-      address,
+      address: finalAddress,
       date,
       time_slot,
       delivery_type,
-      delivery_price: (delivery_type === "mkad") ? DELIVERY_MKAD : "уточним",
+      delivery_price,
       total: (delivery_type === "mkad") ? (cartSubtotal() + DELIVERY_MKAD) : cartSubtotal(),
       items: items.map(it => ({ id: it.id, name: it.name, qty: it.qty, price: it.price })),
       comment: el("comment").value.trim()
     };
 
-    // Telegram WebApp context (не ломает веб)
+    // Telegram WebApp context
     try{
       if (window.Telegram && window.Telegram.WebApp){
         const tg = window.Telegram.WebApp;
@@ -926,7 +1001,6 @@
 
   // ====== INIT ======
   async function loadProducts(){
-    // минимальный и стабильный парсер: выдерживает {products:[...]} и просто [...]
     const url = `${API_BASE}?action=products`;
     const res = await fetch(url, { method:"GET", cache:"no-store" });
 
@@ -936,6 +1010,7 @@
 
     const json = await res.json();
     const arr = Array.isArray(json) ? json : (json && Array.isArray(json.products) ? json.products : []);
+
     products = arr.map((p, i) => ({
       id: (p.id ?? p.sku ?? p.code ?? i).toString(),
       name: p.name ?? p.title ?? "без названия",
@@ -946,22 +1021,30 @@
   }
 
   function initForm(){
-    // дата по умолчанию — сегодня
     el("date").value = todayISO();
     renderTimeSlots();
 
-    // если выбрали другую дату — обновляем интервалы
     el("date").addEventListener("change", () => {
       renderTimeSlots();
     });
 
-    // доставка влияет на итог
     el("deliveryType").addEventListener("change", () => {
+      const t = el("deliveryType").value;
+
+      // если pickup — адрес не нужен
+      if (t === "pickup"){
+        el("address").value = "";
+        el("address").disabled = true;
+        el("address").placeholder = "самовывоз: Автозаводская 23с2";
+      } else {
+        el("address").disabled = false;
+        el("address").placeholder = "город, улица, дом, подъезд, квартира";
+      }
+
       renderSummary();
       renderBottom();
     });
 
-    // совпадает с заказчиком
     el("sameAsCustomer").addEventListener("change", () => {
       const same = el("sameAsCustomer").checked;
       el("recipientFields").style.display = same ? "none" : "grid";
@@ -971,20 +1054,17 @@
     el("customerName").addEventListener("input", syncRecipientIfSame);
     el("customerPhone").addEventListener("input", syncRecipientIfSame);
 
-    // первичное состояние
     el("recipientFields").style.display = "grid";
     renderSummary();
   }
 
   function initUI(){
-    // кнопки
     el("openCartBtn").addEventListener("click", openCart);
     el("checkoutBtn").addEventListener("click", openCart);
 
     el("closeCart").addEventListener("click", closeCart);
     el("closeProduct").addEventListener("click", closeProduct);
 
-    // клик по фону закрывает модалки
     el("cartOverlay").addEventListener("click", (e) => {
       if (e.target === el("cartOverlay")) closeCart();
     });
@@ -1004,7 +1084,6 @@
     initUI();
     initForm();
 
-    // Telegram mini app safe init
     try{
       const tg = window.Telegram?.WebApp;
       if (tg){
@@ -1013,7 +1092,6 @@
       }
     } catch(_) {}
 
-    // стабильная загрузка каталога
     try{
       el("grid").innerHTML = `
         <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:rgba(255,255,255,.75); color:var(--muted); font-weight:700; text-transform:lowercase;">
@@ -1028,7 +1106,7 @@
       console.error(err);
       el("grid").innerHTML = `
         <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:rgba(255,255,255,.75); color:var(--muted); font-weight:700; text-transform:lowercase;">
-          не удалось загрузить каталог. <span style="color:var(--text); font-weight:900;">${String(err?.message || "ошибка")}</span>
+          не удалось загрузить каталог: <span style="color:var(--text); font-weight:900;">${String(err?.message || "ошибка")}</span>
         </div>
       `;
     }
