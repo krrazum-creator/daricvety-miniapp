@@ -370,6 +370,24 @@
   let galleryIndex = 0;
 
   // ====== HELPERS ======
+  function driveImg(url){
+  if (!url) return "";
+  const s = String(url);
+
+  // uc?export=view&id=FILE_ID  -> thumbnail?id=FILE_ID&sz=w2000
+  const m = s.match(/drive\.google\.com\/uc\?export=view&id=([^&]+)/);
+  if (m && m[1]) {
+    return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w2000`;
+  }
+
+  // file/d/FILE_ID/view -> thumbnail
+  const m2 = s.match(/drive\.google\.com\/file\/d\/([^/]+)\//);
+  if (m2 && m2[1]) {
+    return `https://drive.google.com/thumbnail?id=${m2[1]}&sz=w2000`;
+  }
+
+  return s;
+}
   const fmt = (n) => new Intl.NumberFormat("ru-RU").format(n) + " ₽";
   const qs = (s) => document.querySelector(s);
   const el = (id) => document.getElementById(id);
@@ -462,7 +480,7 @@
       const thumb = document.createElement("div");
       thumb.className = "thumb";
       const img = document.createElement("img");
-      img.src = (p.photos && p.photos[0]) ? p.photos[0] : "";
+      img.src = (p.photos && p.photos[0]) ? driveImg(p.photos[0]) : "";
       img.alt = p.name;
       thumb.appendChild(img);
 
@@ -537,7 +555,7 @@
   function renderGallery(){
     const photos = (currentProduct && currentProduct.photos) ? currentProduct.photos : [];
     const img = el("gImg");
-    img.src = photos[galleryIndex] || "";
+    iimg.src = driveImg(photos[galleryIndex] || "");
 
     const dots = el("dots");
     dots.innerHTML = "";
