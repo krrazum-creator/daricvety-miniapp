@@ -448,6 +448,7 @@
           <div class="field">
             <label>адрес</label>
             <input id="address" type="text" placeholder="город, улица, дом, подъезд, квартира" />
+            <div style="font-size:12px;color:var(--muted);">пример: Москва, Автозаводская, 23с2, подъезд 2, кв 15</div>
           </div>
 
           <div class="sectionTitle">заказчик</div>
@@ -1094,6 +1095,30 @@
     return d.length === 11 && d.startsWith("7");
   }
 
+  function isValidAddressRU(address){
+    const raw = String(address || "").trim();
+    if (raw.length < 12) return false;
+
+    const normalized = raw.toLowerCase().replace(/ё/g, "е");
+
+    const hasDigit = /\d/.test(normalized);
+    if (!hasDigit) return false;
+
+    const streetMarkers = [
+      "ул", "улица", "проспект", "пр-т", "шоссе", "бульвар", "б-р", "переулок",
+      "пл", "площадь", "наб", "набережная", "аллея", "проезд", "дом", "д.",
+      "корп", "к.", "стр", "с.", "кв", "квартира"
+    ];
+    const hasStreetMarker = streetMarkers.some((m) => normalized.includes(m));
+    if (!hasStreetMarker) return false;
+
+    const blockedWords = ["тест", "test", "asdf", "qwe", "не знаю", "хз", "нет", "дом", "адрес", "123", "000"];
+    if (blockedWords.some((w) => normalized.includes(w))) return false;
+
+    return true;
+  }
+
+
   function attachPhoneMask(inputId){
     const inp = el(inputId);
     inp.addEventListener("input", () => {
@@ -1158,6 +1183,12 @@
       return;
     }
 
+    const address_valid = delivery_type === "pickup" ? true : isValidAddressRU(address);
+    if (delivery_type !== "pickup" && !address_valid){
+      alert("проверь адрес: улица, дом и детали");
+      return;
+    }
+
     const delivery_price = (delivery_type === "mkad") ? DELIVERY_MKAD : (delivery_type === "pickup" ? 0 : "уточним");
 
     let finalAddress = address;
@@ -1178,6 +1209,7 @@
       recipient_phone: normalizePhoneRU(recipient_phone),
       same_as_customer: same,
       address: finalAddress,
+      address_valid,
       date,
       time_slot,
       delivery_type,
