@@ -13,7 +13,7 @@
 
   <style>
     :root{
-      --bg:#FFFFFF;                  /* чисто белый фон */
+      --bg:#FFFFFF;
       --text:#1C1C1E;
       --muted:#6B6B73;
       --card:#FFFFFF;
@@ -52,7 +52,7 @@
     header{
       padding:10px 0 12px;
       display:flex;
-      align-items:center;                 /* чтобы корзина была между строками */
+      align-items:center;
       justify-content:space-between;
       gap:12px;
     }
@@ -67,7 +67,7 @@
       border-radius:999px;
       font-size:13px;
       display:flex;align-items:center;gap:10px;
-      align-self:center;                 /* стабильно по центру блока */
+      align-self:center;
     }
     .pill button{
       border:none;background:transparent;color:var(--text);
@@ -256,11 +256,10 @@
       position:relative;
       user-select:none;
     }
-    /* режем пропорционально, но фото не 90% экрана: 65vh */
     .gallery img{
       width:100%;
       height:65vh;
-      object-fit:cover;         /* режем */
+      object-fit:cover;
       display:block;
     }
 
@@ -320,7 +319,7 @@
       text-transform:lowercase;
     }
 
-    /* ВАЖНО: 16px фиксит авто-zoom на iOS */
+    /* 16px фиксит авто-zoom на iOS */
     input, select, textarea{
       font-family:inherit;
       font-size:16px;
@@ -448,13 +447,10 @@
       </div>
     </header>
 
-    <!-- фильтры категорий -->
     <div class="filters" id="filters" style="display:none;"></div>
-
     <div class="grid" id="grid"></div>
   </div>
 
-  <!-- bottom bar -->
   <div class="bottomBar" id="bottomBar" style="display:none;">
     <div class="bottomInner">
       <div class="mini">
@@ -524,7 +520,6 @@
 
           <div class="field">
             <label>адрес</label>
-            <!-- адрес остаётся полем с примером; проверки обязательности больше нет -->
             <input id="address" type="text" placeholder="пример: город, улица, дом, подъезд, квартира" />
           </div>
 
@@ -594,7 +589,7 @@
     </div>
   </div>
 
-  <!-- UX overlay (замена alert) -->
+  <!-- UX overlay -->
   <div class="uxOverlay" id="uxOverlay" aria-hidden="true">
     <div class="uxCard">
       <div class="uxCardHeader">
@@ -622,17 +617,19 @@
   // динамика на сегодня: +3 часа, округление до 30 минут
   const DYNAMIC_LEAD_MINUTES = 180;
   const SLOT_STEP_MINUTES = 30;
-  const DAY_END_MINUTES = 22*60;           // до 22:00
+
+  // РАБОЧЕЕ ВРЕМЯ ДОСТАВКИ
+  const WORK_START_MINUTES = 10*60; // 10:00
+  const WORK_END_MINUTES   = 22*60; // 22:00
 
   const DELIVERY_MKAD = 650;
 
   // ====== STATE ======
   let products = [];
-  let cart = {}; // {id: qty}
+  let cart = {};
   let currentProduct = null;
   let galleryIndex = 0;
-
-  let activeCategory = "all"; // фильтр
+  let activeCategory = "all";
 
   // ====== HELPERS ======
   const fmt = (n) => new Intl.NumberFormat("ru-RU").format(Number(n) || 0) + " ₽";
@@ -659,15 +656,22 @@
     return Math.ceil(min/step)*step;
   }
 
+  // СЛОТЫ: только 10:00–22:00; ночью начинаем от 10:00
   function availableSlotsForDate(dateISO){
     if (dateISO !== todayISO()) return TIME_SLOTS.slice();
 
     const now = minutesNow();
-    const start = ceilToStep(now + DYNAMIC_LEAD_MINUTES, SLOT_STEP_MINUTES);
+
+    const start = Math.max(
+      WORK_START_MINUTES,
+      ceilToStep(now + DYNAMIC_LEAD_MINUTES, SLOT_STEP_MINUTES)
+    );
+
+    if (start >= WORK_END_MINUTES) return [];
 
     const slots = [];
-    for (let t = start; t < DAY_END_MINUTES; t += SLOT_STEP_MINUTES){
-      const end = Math.min(t + 120, DAY_END_MINUTES); // максимум 2 часа, но не позже 22:00
+    for (let t = start; t < WORK_END_MINUTES; t += SLOT_STEP_MINUTES){
+      const end = Math.min(t + 120, WORK_END_MINUTES);
       if ((end - t) < 60) continue;
       slots.push(`${toHM(t)}-${toHM(end)}`);
     }
@@ -695,7 +699,7 @@
     const t = el("deliveryType").value;
     if (t === "mkad") return DELIVERY_MKAD;
     if (t === "pickup") return 0;
-    return null; // outside
+    return null;
   }
 
   function updateCheckoutButtons(){
@@ -733,10 +737,8 @@
     document.documentElement.style.setProperty("--app-h", h + "px");
   }
 
-  // ===== UX overlay (замена alert) =====
-  function closeUX(){
-    el("uxOverlay").classList.remove("open");
-  }
+  // ===== UX overlay =====
+  function closeUX(){ el("uxOverlay").classList.remove("open"); }
 
   function openSupport(){
     try{
@@ -767,7 +769,6 @@
       a.appendChild(b);
     });
 
-    // дефолтная кнопка закрыть, если ничего не дали
     if (actions.length === 0){
       const b = document.createElement("button");
       b.className = "btn primary";
@@ -782,7 +783,7 @@
   function showErrorUX(message){
     showUX({
       title: "не удалось",
-      text: message || "не удалось отправить заказ. попробуй ещё раз или напиши нам.",
+      text: message || "не удалось отправить заказ. попробуй ещё раз или напиши нам в поддержку.",
       actions: [
         { text: "попробовать ещё раз", kind: "primary", onClick: ()=>{} },
         { text: "написать в поддержку", kind: "secondary", close: true, onClick: openSupport }
@@ -790,10 +791,18 @@
     });
   }
 
+  function shortOrderCode(orderId){
+    // ORD1234567890 -> 4 последние цифры
+    const digits = String(orderId || "").replace(/\D/g, "");
+    if (digits.length >= 4) return digits.slice(-4);
+    // если вдруг пришло что-то другое
+    return (String(orderId || "").slice(-4) || "—");
+  }
+
   function showSuccessUX(orderId){
-    const txt = orderId
-      ? `заказ отправлен.\nномер: ${orderId}.\nмы свяжемся для подтверждения и оплаты.`
-      : "заказ отправлен.\nмы свяжемся для подтверждения и оплаты.";
+    const code4 = shortOrderCode(orderId);
+    const txt =
+      `заказ отправлен.\nномер: ${code4}.\nмы свяжемся для подтверждения и оплаты.`;
 
     showUX({
       title: "готово",
@@ -804,7 +813,7 @@
     });
   }
 
-  // ===== GOOGLE DRIVE IMAGE (фикс синего вопроса) =====
+  // ===== GOOGLE DRIVE IMAGE =====
   function extractDriveId(s){
     if (!s) return null;
     const str = String(s);
@@ -1033,7 +1042,6 @@
       dots.appendChild(d);
     });
 
-    // свайп
     let startX = null;
     const gallery = el("gallery");
     gallery.ontouchstart = (ev)=>{ startX = ev.touches[0].clientX; };
@@ -1218,10 +1226,8 @@
 
   function formatPhoneRU(value){
     let d = onlyDigits(value);
-
     if (d.startsWith("8")) d = "7" + d.slice(1);
     if (d.length && !d.startsWith("7")) d = "7" + d;
-
     d = d.slice(0, 11);
 
     const p = d.slice(1);
@@ -1236,7 +1242,6 @@
     if (b) out += " " + b;
     if (c) out += "-" + c;
     if (e) out += "-" + e;
-
     return out;
   }
 
@@ -1294,7 +1299,7 @@
 
     const delivery_type = el("deliveryType").value;
 
-    const address = el("address").value.trim(); // остаётся, но не обязателен
+    const address = el("address").value.trim(); // не обязателен
     const date = el("date").value;
     const time_slot = el("timeSlot").value;
 
@@ -1302,12 +1307,8 @@
     const recipient_name = same ? customer_name : el("recipientName").value.trim();
     const recipient_phone = same ? customer_phone : el("recipientPhone").value.trim();
 
-    // адрес УБРАН из обязательных полей
     if (!customer_name || !customer_phone || !recipient_name || !recipient_phone || !date || !time_slot){
-      showUX({
-        title:"проверь поля",
-        text:"нужны: заказчик, получатель, дата и интервал."
-      });
+      showUX({ title:"проверь поля", text:"нужны: заказчик, получатель, дата и интервал." });
       return;
     }
 
@@ -1375,11 +1376,12 @@
     setSubmitLoading(true);
 
     try{
+      // ВАЖНО: text/plain -> без preflight, стабильнее для GAS
       const res = await fetch(API_BASE, {
-  method: "POST",
-  headers: { "Content-Type": "text/plain;charset=utf-8" },
-  body: JSON.stringify(payload)
-});
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
 
       const raw = await res.text();
       let json = null;
@@ -1402,7 +1404,8 @@
 
       showSuccessUX(orderId);
     } catch(err){
-      console.error(err);showErrorUX(String(err?.message || err || "ошибка"));
+      console.error(err);
+      showErrorUX("не удалось отправить заказ. попробуй ещё раз или напиши нам в поддержку.");
     } finally{
       setSubmitLoading(false);
     }
@@ -1497,7 +1500,6 @@
 
     el("submitOrder").addEventListener("click", submitOrder);
 
-    // UX overlay controls
     el("uxCloseBtn").addEventListener("click", closeUX);
     el("uxOverlay").addEventListener("click", (e) => {
       if (e.target === el("uxOverlay")) closeUX();
@@ -1508,7 +1510,6 @@
     initUI();
     initForm();
 
-    // высота + telegram viewport changes
     try{
       const tg = window.Telegram?.WebApp;
       if (tg){
