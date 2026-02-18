@@ -2,7 +2,8 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <!-- фикс iOS-зума + стабильный viewport -->
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <title>дарицветы.москва — доставка цветов</title>
 
   <!-- font -->
@@ -13,7 +14,7 @@
   <style>
     :root{
       --bg:#FFFFFF;                  /* чисто белый фон */
-      --text:#2C2C30;
+      --text:#1C1C1E;
       --muted:#6B6B73;
       --card:#FFFFFF;
       --stroke:rgba(0,0,0,.08);
@@ -25,17 +26,25 @@
       --secondaryActive:#f2c7ce;
 
       --radius:22px;
+
+      /* фикс высоты под telegram webapp */
+      --app-h: 100vh;
     }
 
     *{box-sizing:border-box}
-    body{
+    html, body{
+      height:100%;
       margin:0;
+      padding:0;
+      overflow-x:hidden;
+    }
+    body{
       font-family:"Manrope",-apple-system,system-ui,"SF Pro Text","SF Pro Display",Segoe UI,Roboto,Arial,sans-serif;
-      font-weight:400;
       background:var(--bg);
       color:var(--text);
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
+      min-height:var(--app-h);
     }
 
     .wrap{max-width:980px;margin:0 auto;padding:20px 16px 120px}
@@ -48,7 +57,7 @@
       gap:12px;
     }
     .brand{line-height:1.1}
-    .brand .name{font-size:22px;font-weight:600;letter-spacing:.1px}
+    .brand .name{font-size:22px;font-weight:800;letter-spacing:.1px}
     .brand .tag{margin-top:6px;font-size:13px;color:var(--muted);font-weight:600}
 
     .pill{
@@ -69,7 +78,7 @@
       min-width:22px;height:22px;border-radius:999px;
       background:var(--primary);
       display:flex;align-items:center;justify-content:center;
-      font-weight:600;font-size:12px;
+      font-weight:900;font-size:12px;
       border:1px solid rgba(0,0,0,.06);
     }
 
@@ -136,12 +145,12 @@
       display:flex;flex-direction:column;gap:10px;flex:1;
     }
     .title{
-      font-size:14px;font-weight:600;line-height:1.25;
+      font-size:14px;font-weight:800;line-height:1.25;
       margin:0;
       text-transform:lowercase;
     }
     .price{
-      font-size:15px;font-weight:600;
+      font-size:15px;font-weight:900;
       margin:0;
     }
     .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -150,7 +159,7 @@
       border:none;cursor:pointer;
       padding:10px 12px;
       border-radius:16px;
-      font-weight:600;font-size:13px;
+      font-weight:900;font-size:13px;
       text-transform:lowercase;
       user-select:none;
     }
@@ -174,9 +183,9 @@
     .qty button{
       width:32px;height:32px;border-radius:14px;border:none;cursor:pointer;
       background:rgba(0,0,0,.04);
-      font-weight:600;font-size:16px;
+      font-weight:900;font-size:16px;
     }
-    .qty span{min-width:20px;text-align:center;font-weight:600}
+    .qty span{min-width:20px;text-align:center;font-weight:900}
 
     /* ===== MODAL BASE (скролл) ===== */
     .overlay{
@@ -187,6 +196,7 @@
       align-items:flex-start;
       overflow-y:auto;
       -webkit-overflow-scrolling:touch;
+      height:var(--app-h);
     }
     .overlay.open{display:flex}
 
@@ -197,7 +207,7 @@
       border:1px solid var(--stroke);
       box-shadow:0 18px 60px rgba(0,0,0,.18);
       overflow:hidden;
-      max-height:calc(100vh - 20px);
+      max-height:calc(var(--app-h) - 20px);
       display:flex;
       flex-direction:column;
       margin:10px 0;
@@ -209,7 +219,7 @@
       flex:0 0 auto;
     }
     .sheetHeader .h{
-      font-weight:600;
+      font-weight:900;
       letter-spacing:.1px;
       text-transform:lowercase;
     }
@@ -230,8 +240,8 @@
     #productOverlay .sheet{
       width:100%;
       max-width:100%;
-      height:100vh;
-      max-height:100vh;
+      height:var(--app-h);
+      max-height:var(--app-h);
       border-radius:0;
       margin:0;
       border:none;
@@ -290,7 +300,7 @@
 
     .sectionTitle{
       margin:14px 0 8px;
-      font-weight:600;
+      font-weight:900;
       font-size:13px;
       letter-spacing:.1px;
       text-transform:lowercase;
@@ -309,9 +319,11 @@
       font-weight:700;
       text-transform:lowercase;
     }
+
+    /* ВАЖНО: 16px фиксит авто-zoom на iOS */
     input, select, textarea{
       font-family:inherit;
-      font-size:14px;
+      font-size:16px;
       padding:12px 12px;
       border-radius:16px;
       border:1px solid var(--stroke);
@@ -330,7 +342,7 @@
       font-size:13px;
     }
     .summary .line{display:flex;justify-content:space-between;gap:10px}
-    .summary .total{font-weight:600;font-size:14px}
+    .summary .total{font-weight:900;font-size:14px}
 
     .hint{
       margin-top:10px;
@@ -354,7 +366,72 @@
       font-weight:700;
       text-transform:lowercase;
     }
-    .bottomInner .mini b{color:var(--text);font-weight:600}
+    .bottomInner .mini b{color:var(--text);font-weight:900}
+
+    /* ===== UX OVERLAY (замена alert) ===== */
+    .uxOverlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px 16px calc(18px + env(safe-area-inset-bottom));
+      background:rgba(0,0,0,.35);
+      z-index:9999;
+      height:var(--app-h);
+    }
+    .uxOverlay.open{display:flex}
+    .uxCard{
+      width:min(520px, 100%);
+      background:#fff;
+      border:1px solid var(--stroke);
+      border-radius:26px;
+      box-shadow:0 18px 60px rgba(0,0,0,.20);
+      overflow:hidden;
+    }
+    .uxCardHeader{
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid var(--stroke);
+    }
+    .uxCardHeader .t{
+      font-weight:900;
+      text-transform:lowercase;
+      letter-spacing:.1px;
+    }
+    .uxCardBody{
+      padding:14px 16px 16px;
+    }
+    .uxText{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+      font-weight:700;
+      text-transform:lowercase;
+      white-space:pre-line;
+    }
+    .uxActions{
+      padding:0 16px 16px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    /* loader в кнопке */
+    .spinner{
+      width:16px;height:16px;
+      border-radius:999px;
+      border:3px solid rgba(0,0,0,.12);
+      border-top-color: rgba(0,0,0,.75);
+      display:inline-block;
+      animation:spin .8s linear infinite;
+      vertical-align:middle;
+    }
+    @keyframes spin{ to { transform: rotate(360deg); } }
   </style>
 </head>
 
@@ -447,8 +524,8 @@
 
           <div class="field">
             <label>адрес</label>
-            <input id="address" type="text" placeholder="город, улица, дом, подъезд, квартира" />
-            <div style="font-size:12px;color:var(--muted);">пример: Москва, Автозаводская, 23с2, подъезд 2, кв 15</div>
+            <!-- адрес остаётся полем с примером; проверки обязательности больше нет -->
+            <input id="address" type="text" placeholder="пример: город, улица, дом, подъезд, квартира" />
           </div>
 
           <div class="sectionTitle">заказчик</div>
@@ -461,13 +538,6 @@
           <div class="field">
             <label>телефон</label>
             <input id="customerPhone" type="tel" placeholder="+7 (___) ___-__-__" inputmode="numeric" />
-          </div>
-
-          <div class="field">
-            <label style="display:flex; align-items:center; gap:10px;">
-              <input id="needCallback" type="checkbox" />
-              нужен обратный звонок
-            </label>
           </div>
 
           <div class="sectionTitle">получатель</div>
@@ -524,9 +594,27 @@
     </div>
   </div>
 
+  <!-- UX overlay (замена alert) -->
+  <div class="uxOverlay" id="uxOverlay" aria-hidden="true">
+    <div class="uxCard">
+      <div class="uxCardHeader">
+        <div class="t" id="uxTitle">сообщение</div>
+        <button class="iconBtn" id="uxCloseBtn">✕</button>
+      </div>
+      <div class="uxCardBody">
+        <p class="uxText" id="uxText"></p>
+      </div>
+      <div class="uxActions" id="uxActions"></div>
+    </div>
+  </div>
+
 <script>
   // ====== CONFIG ======
   const API_BASE = "https://script.google.com/macros/s/AKfycbzdOFj8B64mrN1q_cmdhjOkvG4KsgZZP-6b2lpfdXBQ2-JUz3juEYcr76iPrvp5lGEhbA/exec";
+
+  // поддержка
+  const SUPPORT_USERNAME = "chaiori";
+  const SUPPORT_URL = `https://t.me/${SUPPORT_USERNAME}`;
 
   // фиксированные слоты на будущие дни
   const TIME_SLOTS = ["10:00-14:00","14:00-18:00","18:00-22:00"];
@@ -577,12 +665,9 @@
     const now = minutesNow();
     const start = ceilToStep(now + DYNAMIC_LEAD_MINUTES, SLOT_STEP_MINUTES);
 
-    // Формируем интервалы до 22:00.
-    // ВАЖНО: если старт 20:30, то делаем слот 20:30-22:00 (короче, но валидный)
     const slots = [];
     for (let t = start; t < DAY_END_MINUTES; t += SLOT_STEP_MINUTES){
       const end = Math.min(t + 120, DAY_END_MINUTES); // максимум 2 часа, но не позже 22:00
-      // чтобы не было совсем короткого слота (например 21:30-22:00 на 30 минут), оставим минимум 60 минут:
       if ((end - t) < 60) continue;
       slots.push(`${toHM(t)}-${toHM(end)}`);
     }
@@ -623,10 +708,7 @@
     const count = cartCount();
     el("cartCount").textContent = count;
     el("bottomCount").textContent = count;
-
-    // на главной — сумма без доставки
     el("bottomTotal").textContent = fmt(cartSubtotal());
-
     el("bottomBar").style.display = count > 0 ? "block" : "none";
     updateCheckoutButtons();
   }
@@ -644,20 +726,95 @@
     }
   }
 
+  // ===== стабилизация высоты webapp =====
+  function setAppHeight(){
+    const tg = window.Telegram?.WebApp;
+    const h = (tg && tg.viewportHeight) ? tg.viewportHeight : window.innerHeight;
+    document.documentElement.style.setProperty("--app-h", h + "px");
+  }
+
+  // ===== UX overlay (замена alert) =====
+  function closeUX(){
+    el("uxOverlay").classList.remove("open");
+  }
+
+  function openSupport(){
+    try{
+      const tg = window.Telegram?.WebApp;
+      if (tg && typeof tg.openTelegramLink === "function"){
+        tg.openTelegramLink(SUPPORT_URL);
+        return;
+      }
+    } catch(_) {}
+    window.open(SUPPORT_URL, "_blank");
+  }
+
+  function showUX({ title, text, actions = [] }){
+    el("uxTitle").textContent = (title || "сообщение").toLowerCase();
+    el("uxText").textContent = (text || "").toLowerCase();
+
+    const a = el("uxActions");
+    a.innerHTML = "";
+
+    actions.forEach(btn => {
+      const b = document.createElement("button");
+      b.className = "btn " + (btn.kind === "secondary" ? "secondary" : "primary");
+      b.textContent = (btn.text || "").toLowerCase();
+      b.addEventListener("click", () => {
+        if (btn.close !== false) closeUX();
+        if (typeof btn.onClick === "function") btn.onClick();
+      });
+      a.appendChild(b);
+    });
+
+    // дефолтная кнопка закрыть, если ничего не дали
+    if (actions.length === 0){
+      const b = document.createElement("button");
+      b.className = "btn primary";
+      b.textContent = "ок";
+      b.addEventListener("click", closeUX);
+      a.appendChild(b);
+    }
+
+    el("uxOverlay").classList.add("open");
+  }
+
+  function showErrorUX(message){
+    showUX({
+      title: "не удалось",
+      text: message || "не удалось отправить заказ. попробуй ещё раз или напиши нам.",
+      actions: [
+        { text: "попробовать ещё раз", kind: "primary", onClick: ()=>{} },
+        { text: "написать в поддержку", kind: "secondary", close: true, onClick: openSupport }
+      ]
+    });
+  }
+
+  function showSuccessUX(orderId){
+    const txt = orderId
+      ? `заказ отправлен.\nномер: ${orderId}.\nмы свяжемся для подтверждения и оплаты.`
+      : "заказ отправлен.\nмы свяжемся для подтверждения и оплаты.";
+
+    showUX({
+      title: "готово",
+      text: txt,
+      actions: [
+        { text: "вернуться в каталог", kind: "primary", onClick: ()=>{} }
+      ]
+    });
+  }
+
   // ===== GOOGLE DRIVE IMAGE (фикс синего вопроса) =====
   function extractDriveId(s){
     if (!s) return null;
     const str = String(s);
 
-    // /file/d/<ID>/
     let m = str.match(/drive\.google\.com\/file\/d\/([^/]+)\//);
     if (m && m[1]) return m[1];
 
-    // ...id=<ID>
     m = str.match(/[?&]id=([^&]+)/);
     if (m && m[1]) return m[1];
 
-    // open?id=<ID>
     m = str.match(/drive\.google\.com\/open\?id=([^&]+)/);
     if (m && m[1]) return m[1];
 
@@ -669,7 +826,6 @@
     const id = extractDriveId(url);
     if (!id) return [String(url)];
 
-    // Порядок важен: сначала thumbnail (быстрее), потом uc
     return [
       `https://drive.google.com/thumbnail?id=${id}&sz=w2000`,
       `https://drive.google.com/uc?export=view&id=${id}`,
@@ -689,7 +845,6 @@
       if (idx < list.length){
         imgEl.src = list[idx];
       } else {
-        // последняя страховка: пустая картинка
         imgEl.onerror = null;
         imgEl.removeAttribute("src");
       }
@@ -703,7 +858,6 @@
 
   // ===== FILTERS =====
   function getCategory(p){
-    // в таблице ты писала "wrap" — поддерживаем и wrap, и category
     const raw = (p.category ?? p.wrap ?? "").toString().trim();
     return raw ? raw : "без категории";
   }
@@ -1065,16 +1219,12 @@
   function formatPhoneRU(value){
     let d = onlyDigits(value);
 
-    // допускаем ввод с 8 — приводим к 7
     if (d.startsWith("8")) d = "7" + d.slice(1);
-
-    // если пользователь начал с 9 — считаем что это мобильный РФ
     if (d.length && !d.startsWith("7")) d = "7" + d;
 
     d = d.slice(0, 11);
 
-    // +7 (999) 123-45-67
-    const p = d.slice(1); // после 7
+    const p = d.slice(1);
     const a = p.slice(0,3);
     const b = p.slice(3,6);
     const c = p.slice(6,8);
@@ -1102,41 +1252,12 @@
     return d.length === 11 && d.startsWith("7");
   }
 
-  function isValidAddressRU(address){
-    const raw = String(address || "").trim();
-    if (raw.length < 12) return false;
-
-    const normalized = raw.toLowerCase().replace(/ё/g, "е");
-
-    const hasDigit = /\d/.test(normalized);
-    if (!hasDigit) return false;
-
-    const streetMarkers = [
-      "ул", "улица", "проспект", "пр-т", "шоссе", "бульвар", "б-р", "переулок",
-      "пл", "площадь", "наб", "набережная", "аллея", "проезд", "дом", "д.",
-      "корп", "к.", "стр", "с.", "кв", "квартира"
-    ];
-    const hasStreetMarker = streetMarkers.some((m) => normalized.includes(m));
-    if (!hasStreetMarker) return false;
-
-    const blockedWords = ["тест", "test", "asdf", "qwe", "не знаю", "хз", "нет", "дом", "адрес", "123", "000"];
-    if (blockedWords.some((w) => normalized.includes(w))) return false;
-
-    return true;
-  }
-
-
   function attachPhoneMask(inputId){
     const inp = el(inputId);
     inp.addEventListener("input", () => {
       const caretAtEnd = inp.selectionStart === inp.value.length;
       inp.value = formatPhoneRU(inp.value);
       if (caretAtEnd) inp.setSelectionRange(inp.value.length, inp.value.length);
-    });
-    inp.addEventListener("blur", () => {
-      if (inp.value && !isValidPhoneRU(inp.value)){
-        // мягкая подсветка через alert только при отправке, тут не дергаем
-      }
     });
   }
 
@@ -1146,10 +1267,25 @@
     el("recipientPhone").value = el("customerPhone").value.trim();
   }
 
+  function setSubmitLoading(isLoading){
+    const btn = el("submitOrder");
+    if (!btn) return;
+
+    if (isLoading){
+      btn.disabled = true;
+      btn.dataset.prev = btn.textContent;
+      btn.innerHTML = `<span class="spinner"></span> отправляем…`;
+    } else {
+      btn.disabled = false;
+      btn.textContent = btn.dataset.prev || "отправить заказ";
+      btn.dataset.prev = "";
+    }
+  }
+
   async function submitOrder(){
     const items = cartItems();
     if (items.length === 0){
-      alert("корзина пустая");
+      showUX({ title:"корзина пустая", text:"добавь товары и попробуй ещё раз." });
       return;
     }
 
@@ -1158,7 +1294,7 @@
 
     const delivery_type = el("deliveryType").value;
 
-    const address = el("address").value.trim();
+    const address = el("address").value.trim(); // остаётся, но не обязателен
     const date = el("date").value;
     const time_slot = el("timeSlot").value;
 
@@ -1166,33 +1302,28 @@
     const recipient_name = same ? customer_name : el("recipientName").value.trim();
     const recipient_phone = same ? customer_phone : el("recipientPhone").value.trim();
 
-    const mustHaveAddress = (delivery_type !== "pickup");
-
-    if (!customer_name || !customer_phone || !recipient_name || !recipient_phone || (mustHaveAddress && !address) || !date || !time_slot){
-      alert("проверь поля: заказчик, получатель, дата и интервал" + (mustHaveAddress ? ", адрес" : ""));
+    // адрес УБРАН из обязательных полей
+    if (!customer_name || !customer_phone || !recipient_name || !recipient_phone || !date || !time_slot){
+      showUX({
+        title:"проверь поля",
+        text:"нужны: заказчик, получатель, дата и интервал."
+      });
       return;
     }
 
     if (!isValidPhoneRU(customer_phone)){
-      alert("проверь телефон заказчика: нужен полный номер РФ (+7...)");
+      showUX({ title:"телефон", text:"проверь телефон заказчика: нужен полный номер рф (+7…)." });
       return;
     }
     if (!isValidPhoneRU(recipient_phone)){
-      alert("проверь телефон получателя: нужен полный номер РФ (+7...)");
+      showUX({ title:"телефон", text:"проверь телефон получателя: нужен полный номер рф (+7…)." });
       return;
     }
 
-    // проверка слотов (и динамика, и фикс)
     const slots = availableSlotsForDate(date);
     if (!slots.includes(time_slot)){
-      alert("этот интервал уже недоступен. выбери другой.");
       renderTimeSlots();
-      return;
-    }
-
-    const address_valid = delivery_type === "pickup" ? true : isValidAddressRU(address);
-    if (delivery_type !== "pickup" && !address_valid){
-      alert("проверь адрес: улица, дом и детали");
+      showUX({ title:"интервал", text:"этот интервал уже недоступен. выбери другой." });
       return;
     }
 
@@ -1216,7 +1347,6 @@
       recipient_phone: normalizePhoneRU(recipient_phone),
       same_as_customer: same,
       address: finalAddress,
-      address_valid,
       date,
       time_slot,
       delivery_type,
@@ -1225,7 +1355,6 @@
       items: items.map(it => ({ id: it.id, name: it.name, qty: it.qty, price: it.price })),
       card_not_needed,
       card_text,
-      need_callback: !!el("needCallback").checked,
       comment: (el("comment").value || "").trim()
     };
 
@@ -1243,8 +1372,7 @@
       }
     } catch(_) {}
 
-    el("submitOrder").disabled = true;
-    el("submitOrder").textContent = "отправляем…";
+    setSubmitLoading(true);
 
     try{
       const res = await fetch(API_BASE, {
@@ -1253,8 +1381,18 @@
         body: JSON.stringify(payload)
       });
 
-      const text = await res.text();
-      if (!res.ok) throw new Error(text);
+      const raw = await res.text();
+      let json = null;
+      try { json = JSON.parse(raw); } catch(_) {}
+
+      if (!res.ok){
+        throw new Error(json?.error || raw || `http ${res.status}`);
+      }
+      if (json && json.status === "error"){
+        throw new Error(json.error || "ошибка сервера");
+      }
+
+      const orderId = json?.order_id || "";
 
       cart = {};
       renderBottom();
@@ -1262,13 +1400,12 @@
       closeCart();
       closeProduct();
 
-      alert("заказ отправлен. мы свяжемся для подтверждения и оплаты.");
+      showSuccessUX(orderId);
     } catch(err){
       console.error(err);
-      alert("не удалось отправить заказ. попробуй ещё раз или напиши нам в telegram.");
+      showErrorUX("не удалось отправить заказ. попробуй ещё раз или напиши нам в поддержку.");
     } finally{
-      el("submitOrder").disabled = false;
-      el("submitOrder").textContent = "отправить заказ";
+      setSubmitLoading(false);
     }
   }
 
@@ -1286,9 +1423,7 @@
       name: p.name ?? p.title ?? "без названия",
       price: Number(p.price ?? p.cost ?? 0) || 0,
       description: p.description ?? p.desc ?? "",
-      // поддержка: photos или images
       photos: nonEmptyPhotos(Array.isArray(p.photos) ? p.photos : (Array.isArray(p.images) ? p.images : [])),
-      // категории: category или wrap
       category: (p.category ?? p.wrap ?? "").toString().trim(),
       wrap: (p.wrap ?? "").toString().trim()
     }));
@@ -1308,10 +1443,10 @@
       if (t === "pickup"){
         el("address").value = "";
         el("address").disabled = true;
-        el("address").placeholder = "самовывоз: Автозаводская 23с2";
+        el("address").placeholder = "пример: самовывоз — Автозаводская 23с2";
       } else {
         el("address").disabled = false;
-        el("address").placeholder = "город, улица, дом, подъезд, квартира";
+        el("address").placeholder = "пример: город, улица, дом, подъезд, квартира";
       }
 
       renderSummary();
@@ -1327,18 +1462,15 @@
     el("customerName").addEventListener("input", syncRecipientIfSame);
     el("customerPhone").addEventListener("input", syncRecipientIfSame);
 
-    // открытка: “не нужна” скрывает поле
     el("cardNotNeeded").addEventListener("change", () => {
       const off = el("cardNotNeeded").checked;
       el("cardTextField").style.display = off ? "none" : "flex";
       if (off) el("cardText").value = "";
     });
 
-    // маски телефона
     attachPhoneMask("customerPhone");
     attachPhoneMask("recipientPhone");
 
-    // начальное состояние
     el("recipientFields").style.display = "grid";
     el("cardTextField").style.display = "flex";
     renderSummary();
@@ -1365,19 +1497,33 @@
     });
 
     el("submitOrder").addEventListener("click", submitOrder);
+
+    // UX overlay controls
+    el("uxCloseBtn").addEventListener("click", closeUX);
+    el("uxOverlay").addEventListener("click", (e) => {
+      if (e.target === el("uxOverlay")) closeUX();
+    });
   }
 
   async function boot(){
     initUI();
     initForm();
 
+    // высота + telegram viewport changes
     try{
       const tg = window.Telegram?.WebApp;
       if (tg){
         tg.ready();
         tg.expand?.();
+        setAppHeight();
+        tg.onEvent?.("viewportChanged", setAppHeight);
+      } else {
+        setAppHeight();
       }
-    } catch(_) {}
+    } catch(_) {
+      setAppHeight();
+    }
+    window.addEventListener("resize", setAppHeight);
 
     try{
       el("grid").innerHTML = `
@@ -1395,6 +1541,9 @@
       el("grid").innerHTML = `
         <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:700; text-transform:lowercase;">
           не удалось загрузить каталог: <span style="color:var(--text); font-weight:900;">${String(err?.message || "ошибка")}</span>
+          <div style="margin-top:10px;">
+            <button class="btn secondary" style="padding:10px 12px;" onclick="(${openSupport.toString()})()">написать в поддержку</button>
+          </div>
         </div>
       `;
     }
