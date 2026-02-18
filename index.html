@@ -463,6 +463,13 @@
             <input id="customerPhone" type="tel" placeholder="+7 (___) ___-__-__" inputmode="numeric" />
           </div>
 
+          <div class="field">
+            <label style="display:flex; align-items:center; gap:10px;">
+              <input id="needCallback" type="checkbox" />
+              нужен обратный звонок
+            </label>
+          </div>
+
           <div class="sectionTitle">получатель</div>
 
           <div class="field">
@@ -1218,6 +1225,7 @@
       items: items.map(it => ({ id: it.id, name: it.name, qty: it.qty, price: it.price })),
       card_not_needed,
       card_text,
+      need_callback: !!el("needCallback").checked,
       comment: (el("comment").value || "").trim()
     };
 
