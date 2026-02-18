@@ -1376,10 +1376,10 @@
 
     try{
       const res = await fetch(API_BASE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+  method: "POST",
+  headers: { "Content-Type": "text/plain;charset=utf-8" },
+  body: JSON.stringify(payload)
+});
 
       const raw = await res.text();
       let json = null;
@@ -1402,8 +1402,7 @@
 
       showSuccessUX(orderId);
     } catch(err){
-      console.error(err);
-      showErrorUX("не удалось отправить заказ. попробуй ещё раз или напиши нам в поддержку.");
+      console.error(err);showErrorUX(String(err?.message || err || "ошибка"));
     } finally{
       setSubmitLoading(false);
     }
