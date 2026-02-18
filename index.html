@@ -6,10 +6,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <title>дарицветы.москва — доставка цветов</title>
 
-  <!-- font -->
+  <!-- font (тоньше) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- было: 400;600;700;800 -> стало: 300;400;500;600 -->
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
 
   <style>
     :root{
@@ -45,6 +46,7 @@
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
       min-height:var(--app-h);
+      font-weight:400;
     }
 
     .wrap{max-width:980px;margin:0 auto;padding:20px 16px 120px}
@@ -57,8 +59,8 @@
       gap:12px;
     }
     .brand{line-height:1.1}
-    .brand .name{font-size:22px;font-weight:800;letter-spacing:.1px}
-    .brand .tag{margin-top:6px;font-size:13px;color:var(--muted);font-weight:600}
+    .brand .name{font-size:22px;font-weight:600;letter-spacing:.1px}
+    .brand .tag{margin-top:6px;font-size:13px;color:var(--muted);font-weight:500}
 
     .pill{
       border:1px solid var(--stroke);
@@ -68,17 +70,18 @@
       font-size:13px;
       display:flex;align-items:center;gap:10px;
       align-self:center;
+      font-weight:400;
     }
     .pill button{
       border:none;background:transparent;color:var(--text);
-      font-weight:800;font-size:13px;cursor:pointer;
+      font-weight:600;font-size:13px;cursor:pointer;
       text-transform:lowercase;
     }
     .pill .count{
       min-width:22px;height:22px;border-radius:999px;
       background:var(--primary);
       display:flex;align-items:center;justify-content:center;
-      font-weight:900;font-size:12px;
+      font-weight:600;font-size:12px;
       border:1px solid rgba(0,0,0,.06);
     }
 
@@ -97,7 +100,7 @@
       padding:8px 10px;
       border-radius:999px;
       font-size:12px;
-      font-weight:800;
+      font-weight:600;
       text-transform:lowercase;
       cursor:pointer;
       white-space:nowrap;
@@ -145,12 +148,12 @@
       display:flex;flex-direction:column;gap:10px;flex:1;
     }
     .title{
-      font-size:14px;font-weight:800;line-height:1.25;
+      font-size:14px;font-weight:600;line-height:1.25;
       margin:0;
       text-transform:lowercase;
     }
     .price{
-      font-size:15px;font-weight:900;
+      font-size:15px;font-weight:600;
       margin:0;
     }
     .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -159,7 +162,7 @@
       border:none;cursor:pointer;
       padding:10px 12px;
       border-radius:16px;
-      font-weight:900;font-size:13px;
+      font-weight:600;font-size:13px;
       text-transform:lowercase;
       user-select:none;
     }
@@ -183,9 +186,9 @@
     .qty button{
       width:32px;height:32px;border-radius:14px;border:none;cursor:pointer;
       background:rgba(0,0,0,.04);
-      font-weight:900;font-size:16px;
+      font-weight:600;font-size:16px;
     }
-    .qty span{min-width:20px;text-align:center;font-weight:900}
+    .qty span{min-width:20px;text-align:center;font-weight:600}
 
     /* ===== MODAL BASE (скролл) ===== */
     .overlay{
@@ -219,7 +222,7 @@
       flex:0 0 auto;
     }
     .sheetHeader .h{
-      font-weight:900;
+      font-weight:600;
       letter-spacing:.1px;
       text-transform:lowercase;
     }
@@ -227,6 +230,7 @@
       border:none;background:transparent;cursor:pointer;
       font-size:20px;line-height:1;
       padding:6px 8px;border-radius:12px;
+      font-weight:500;
     }
     .sheetBody{
       padding:14px 16px 18px;
@@ -279,6 +283,7 @@
       color:var(--muted);
       font-size:13px;line-height:1.45;
       padding-bottom:10px;
+      font-weight:400;
     }
 
     .productFooter{
@@ -299,7 +304,7 @@
 
     .sectionTitle{
       margin:14px 0 8px;
-      font-weight:900;
+      font-weight:600;
       font-size:13px;
       letter-spacing:.1px;
       text-transform:lowercase;
@@ -315,7 +320,7 @@
     }
     .field label{
       font-size:12px;color:var(--muted);
-      font-weight:700;
+      font-weight:500;
       text-transform:lowercase;
     }
 
@@ -328,6 +333,7 @@
       border:1px solid var(--stroke);
       background:#fff;
       outline:none;
+      font-weight:400;
     }
     textarea{min-height:90px;resize:vertical}
 
@@ -339,14 +345,16 @@
       background:rgba(0,0,0,.02);
       display:flex;flex-direction:column;gap:6px;
       font-size:13px;
+      font-weight:400;
     }
     .summary .line{display:flex;justify-content:space-between;gap:10px}
-    .summary .total{font-weight:900;font-size:14px}
+    .summary .total{font-weight:600;font-size:14px}
 
     .hint{
       margin-top:10px;
       font-size:12px;color:var(--muted);
       text-transform:lowercase;
+      font-weight:400;
     }
 
     .bottomBar{
@@ -362,10 +370,10 @@
     }
     .bottomInner .mini{
       font-size:13px;color:var(--muted);
-      font-weight:700;
+      font-weight:400;
       text-transform:lowercase;
     }
-    .bottomInner .mini b{color:var(--text);font-weight:900}
+    .bottomInner .mini b{color:var(--text);font-weight:600}
 
     /* ===== UX OVERLAY (замена alert) ===== */
     .uxOverlay{
@@ -396,7 +404,7 @@
       border-bottom:1px solid var(--stroke);
     }
     .uxCardHeader .t{
-      font-weight:900;
+      font-weight:600;
       text-transform:lowercase;
       letter-spacing:.1px;
     }
@@ -408,7 +416,7 @@
       color:var(--muted);
       font-size:13px;
       line-height:1.45;
-      font-weight:700;
+      font-weight:400;
       text-transform:lowercase;
       white-space:pre-line;
     }
@@ -905,7 +913,7 @@
 
     if (!Array.isArray(products) || products.length === 0){
       grid.innerHTML = `
-        <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:700; text-transform:lowercase;">
+        <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:500; text-transform:lowercase;">
           товаров пока нет
         </div>
       `;
@@ -918,7 +926,7 @@
 
     if (shown.length === 0){
       grid.innerHTML = `
-        <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:700; text-transform:lowercase;">
+        <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:500; text-transform:lowercase;">
           в этой категории пока нет товаров
         </div>
       `;
@@ -1116,7 +1124,7 @@
     root.innerHTML = "";
 
     if (items.length === 0){
-      root.innerHTML = `<div style="color:var(--muted);font-size:13px;font-weight:700;text-transform:lowercase;">корзина пустая</div>`;
+      root.innerHTML = `<div style="color:var(--muted);font-size:13px;font-weight:500;text-transform:lowercase;">корзина пустая</div>`;
       el("summary").innerHTML = "";
       return;
     }
@@ -1136,7 +1144,7 @@
       left.style.gap = "4px";
 
       const nm = document.createElement("div");
-      nm.style.fontWeight = "900";
+      nm.style.fontWeight = "600";
       nm.style.fontSize = "13px";
       nm.style.textTransform = "lowercase";
       nm.textContent = (it.name || "").toLowerCase();
@@ -1144,7 +1152,7 @@
       const pr = document.createElement("div");
       pr.style.color = "var(--muted)";
       pr.style.fontSize = "12px";
-      pr.style.fontWeight = "700";
+      pr.style.fontWeight = "400";
       pr.style.textTransform = "lowercase";
       pr.textContent = `${fmt(it.price)} × ${it.qty}`;
 
@@ -1340,8 +1348,13 @@
 
     const payload = {
       action: "create_order",
+
+      // telegram (заполним ниже из WebApp)
       tg_user_id: 0,
       tg_username: "",
+      tg_first_name: "",
+      tg_last_name: "",
+
       customer_name,
       customer_phone: normalizePhoneRU(customer_phone),
       recipient_name,
@@ -1359,7 +1372,7 @@
       comment: (el("comment").value || "").trim()
     };
 
-    // Telegram WebApp context
+    // Telegram WebApp context (FIX: добавили first/last)
     try{
       if (window.Telegram && window.Telegram.WebApp){
         const tg = window.Telegram.WebApp;
@@ -1369,6 +1382,8 @@
         if (u){
           payload.tg_user_id = u.id || 0;
           payload.tg_username = u.username || "";
+          payload.tg_first_name = u.first_name || "";
+          payload.tg_last_name = u.last_name || "";
         }
       }
     } catch(_) {}
@@ -1527,7 +1542,7 @@
 
     try{
       el("grid").innerHTML = `
-        <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:700; text-transform:lowercase;">
+        <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:500; text-transform:lowercase;">
           загружаем товары…
         </div>
       `;
@@ -1539,8 +1554,8 @@
     } catch (err){
       console.error(err);
       el("grid").innerHTML = `
-        <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:700; text-transform:lowercase;">
-          не удалось загрузить каталог: <span style="color:var(--text); font-weight:900;">${String(err?.message || "ошибка")}</span>
+        <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:500; text-transform:lowercase;">
+          не удалось загрузить каталог: <span style="color:var(--text); font-weight:600;">${String(err?.message || "ошибка")}</span>
           <div style="margin-top:10px;">
             <button class="btn secondary" style="padding:10px 12px;" onclick="(${openSupport.toString()})()">написать в поддержку</button>
           </div>
