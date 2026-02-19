@@ -16,6 +16,12 @@
 
   <style>
     :root{
+      /* telegram theme bridge (fallbacks) */
+      --tg-bg: var(--tg-theme-bg-color, var(--bg));
+      --tg-text: var(--tg-theme-text-color, var(--text));
+      --tg-hint: var(--tg-theme-hint-color, var(--muted));
+      --tg-card: var(--tg-theme-secondary-bg-color, var(--card));
+
       /* palette */
       --sky:#CFE8FF;     /* bounty */
       --wine:#78020E;    /* delicious wine */
@@ -57,8 +63,8 @@
     }
     body{
       font-family:"Manrope",-apple-system,system-ui,"SF Pro Text","SF Pro Display",Segoe UI,Roboto,Arial,sans-serif;
-      background: linear-gradient(180deg, var(--bgTint), var(--bg) 260px);
-      color:var(--text);
+      background: linear-gradient(180deg, var(--bgTint), var(--tg-bg) 260px);
+      color:var(--tg-text);
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
       min-height:var(--app-h);
@@ -583,41 +589,26 @@
             <label>адрес</label>
             <input id="address" type="text" placeholder="пример: город, улица, дом, подъезд, квартира" />
           </div>
-
-          <div class="sectionTitle">заказчик</div>
-
-          <div class="field">
-            <label>имя</label>
-            <input id="customerName" type="text" placeholder="имя заказчика" />
-          </div>
-
-          <div class="field">
-            <label>телефон</label>
-            <input id="customerPhone" type="tel" placeholder="+7 (___) ___-__-__" inputmode="numeric" />
-          </div>
-
-          <div class="sectionTitle">получатель</div>
-
           <div class="field">
             <label style="display:flex; align-items:center; gap:10px;">
-              <input id="sameAsCustomer" type="checkbox" />
-              получатель совпадает с заказчиком
+              <input id="clarifyAddressWithRecipient" type="checkbox" />
+              уточнить адрес у получателя
             </label>
           </div>
 
-          <div id="recipientFields" class="form" style="padding:0; gap:10px;">
-            <div class="field">
-              <label>имя получателя</label>
-              <input id="recipientName" type="text" placeholder="имя получателя" />
+          <div class="sectionTitle">бонусы</div>
+          <div class="summary" id="bonusBox" style="background: rgba(207,232,255,.24);">
+            <div class="line"><span>баланс</span><span><b id="bonusBalance">—</b></span></div>
+            <div class="line" style="align-items:center;">
+              <span>списать</span>
+              <span style="display:flex; align-items:center; gap:10px;">
+                <input id="bonusToSpend" type="number" min="0" step="1" inputmode="numeric"
+                  style="width:140px; text-align:right;" placeholder="0" />
+              </span>
             </div>
-
-            <div class="field">
-              <label>телефон получателя</label>
-              <input id="recipientPhone" type="tel" placeholder="+7 (___) ___-__-__" inputmode="numeric" />
-            </div>
+            <div class="hint" style="margin:6px 0 0;">можно списать при покупке</div>
           </div>
-
-          <div class="sectionTitle">открытка</div>
+<div class="sectionTitle">открытка</div>
 
           <div class="field">
             <label style="display:flex; align-items:center; gap:10px;">
@@ -638,6 +629,18 @@
         </div>
 
         <div class="summary" id="summary"></div>
+
+        <div class="sectionTitle">персональные данные</div>
+        <div class="field">
+          <label style="display:flex; align-items:flex-start; gap:10px; line-height:1.35;">
+            <input id="pdConsent" type="checkbox" />
+            <span>
+              даю согласие на обработку персональных данных и принимаю
+              <a href="#" id="openPrivacy" style="color:var(--wine); text-decoration:underline;">политику конфиденциальности</a>
+            </span>
+          </label>
+        </div>
+
 
         <button class="btn primary" id="submitOrder" style="width:100%; margin-top:12px; padding:14px 12px; border-radius:18px;">
           отправить заказ
@@ -666,7 +669,12 @@
 
 <script>
   // ====== CONFIG ======
-  const API_BASE = "https://script.google.com/macros/s/AKfycbzdOFj8B64mrN1q_cmdhjOkvG4KsgZZP-6b2lpfdXBQ2-JUz3juEYcr76iPrvp5lGEhbA/exec";
+  
+  // бонусы
+  const WELCOME_BONUS = 500; // начисляется на стороне backend один раз для нового tg_user_id
+  let bonusBalance = null;   // число или null (если не определили пользователя)
+  let maxBonusSpend = 0;
+const API_BASE = "https://script.google.com/macros/s/AKfycbzdOFj8B64mrN1q_cmdhjOkvG4KsgZZP-6b2lpfdXBQ2-JUz3juEYcr76iPrvp5lGEhbA/exec";
 
   // поддержка
   const SUPPORT_USERNAME = "chaiori";
@@ -707,7 +715,18 @@
   let _cartSubtotal = 0;
 
   // ====== HELPERS ======
-  const fmt = (n) => new Intl.NumberFormat("ru-RU").format(Number(n) || 0) + " ₽";
+  
+  function getTelegramContext(){
+    try{
+      const tg = window.Telegram?.WebApp;
+      if (!tg) return { user:null, initData:"" };
+      const user = (tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user : null;
+      return { user, initData: tg.initData || "" };
+    } catch(_) {
+      return { user:null, initData:"" };
+    }
+  }
+const fmt = (n) => new Intl.NumberFormat("ru-RU").format(Number(n) || 0) + " ₽";
   const el = (id) => document.getElementById(id);
 
   function todayISO(){
@@ -883,7 +902,7 @@
 
     const slots = [];
     for (let t = start; t < WORK_END_MINUTES; t += SLOT_STEP_MINUTES){
-      const end = Math.min(t + 120, WORK_END_MINUTES);
+      const end = Math.min(t + TODAY_WINDOW_MINUTES, WORK_END_MINUTES);
       if ((end - t) < 60) continue;
       slots.push(`${toHM(t)}-${toHM(end)}`);
     }
@@ -958,6 +977,7 @@
     recomputeCartCaches();
     saveCart();
 
+    updateBonusConstraints();
     renderGrid();
     updateBottom();
     updateCheckoutButtons();
@@ -1351,20 +1371,27 @@
     const sub = cartSubtotal();
     const dType = el("deliveryType").value;
     const dCost = deliveryCost();
+    const rawBonus = Number(el("bonusToSpend")?.value || 0) || 0;
+    const allowed = Math.max(0, Math.min(rawBonus, maxBonusSpend || 0));
+    if (el("bonusToSpend") && allowed !== rawBonus) el("bonusToSpend").value = allowed ? String(allowed) : "";
+
 
     const lines = [];
     lines.push(`<div class="line"><span>товары</span><span>${fmt(sub)}</span></div>`);
 
     if (dType === "mkad"){
       lines.push(`<div class="line"><span>доставка</span><span>${fmt(dCost)}</span></div>`);
-      lines.push(`<div class="line total"><span>итого</span><span>${fmt(sub + dCost)}</span></div>`);
+      if (allowed > 0) lines.push(`<div class="line"><span>бонусы</span><span>- ${fmt(allowed)}</span></div>`);
+      lines.push(`<div class="line total"><span>итого</span><span>${fmt(sub + dCost - allowed)}</span></div>`);
     } else if (dType === "pickup"){
       lines.push(`<div class="line"><span>самовывоз</span><span>${fmt(0)}</span></div>`);
       lines.push(`<div class="line"><span>адрес</span><span>Автозаводская 23с2</span></div>`);
-      lines.push(`<div class="line total"><span>итого</span><span>${fmt(sub)}</span></div>`);
+      if (allowed > 0) lines.push(`<div class="line"><span>бонусы</span><span>- ${fmt(allowed)}</span></div>`);
+      lines.push(`<div class="line total"><span>итого</span><span>${fmt(sub - allowed)}</span></div>`);
     } else {
       lines.push(`<div class="line"><span>доставка</span><span>уточним</span></div>`);
-      lines.push(`<div class="line total"><span>итого</span><span>${fmt(sub)}</span></div>`);
+      if (allowed > 0) lines.push(`<div class="line"><span>бонусы</span><span>- ${fmt(allowed)}</span></div>`);
+      lines.push(`<div class="line total"><span>итого</span><span>${fmt(sub - allowed)}</span></div>`);
     }
 
     el("summary").innerHTML = lines.join("");
@@ -1435,7 +1462,10 @@
         recipientPhone: el("recipientPhone").value,
         cardNotNeeded: el("cardNotNeeded").checked,
         cardText: el("cardText").value,
-        comment: el("comment").value
+        comment: el("comment").value,
+        pdConsent: el("pdConsent").checked,
+        clarifyAddressWithRecipient: el("clarifyAddressWithRecipient").checked,
+                bonusToSpend: el("bonusToSpend").value
       };
       localStorage.setItem(LS_FORM, JSON.stringify(obj));
     } catch(_) {}
@@ -1461,6 +1491,9 @@
       el("cardNotNeeded").checked = !!obj.cardNotNeeded;
       if (obj.cardText != null) el("cardText").value = obj.cardText;
       if (obj.comment != null) el("comment").value = obj.comment;
+      el("pdConsent").checked = !!obj.pdConsent;
+      el("clarifyAddressWithRecipient").checked = !!obj.clarifyAddressWithRecipient;
+            if (obj.bonusToSpend != null) el("bonusToSpend").value = obj.bonusToSpend;
     } catch(_) {}
   }
 
@@ -1499,6 +1532,11 @@
     const recipient_name = same ? customer_name : el("recipientName").value.trim();
     const recipient_phone = same ? customer_phone : el("recipientPhone").value.trim();
 
+    if (!el("pdConsent").checked){
+      showUX({ title:"согласие", text:"перед отправкой заказа нужно согласие на обработку персональных данных." });
+      return;
+    }
+
     if (!customer_name || !customer_phone || !recipient_name || !recipient_phone || !date || !time_slot){
       showUX({ title:"проверь поля", text:"нужны: заказчик, получатель, дата и интервал." });
       return;
@@ -1530,11 +1568,15 @@
     const card_not_needed = el("cardNotNeeded").checked;
     const card_text = card_not_needed ? "" : (el("cardText").value || "").trim();
 
+    const clarify_address_with_recipient = !!el("clarifyAddressWithRecipient").checked;
+    const bonus_to_spend = Number(el("bonusToSpend")?.value || 0) || 0;
+
     const payload = {
       action: "create_order",
 
-      // tg fields (если webapp открыт корректно)
+      // telegram context
       tg_user_id: 0,
+      tg_init_data: "",
       tg_username: "",
       tg_first_name: "",
       tg_last_name: "",
@@ -1552,11 +1594,16 @@
       delivery_type,
       delivery_price,
       total: (delivery_type === "mkad") ? (cartSubtotal() + DELIVERY_MKAD) : cartSubtotal(),
+      subtotal: cartSubtotal(),
+      bonus_to_spend_allowed: Math.max(0, Math.min(bonus_to_spend, maxBonusSpend || 0)),
       items: items.map(it => ({ id: it.id, name: it.name, qty: it.qty, price: it.price })),
 
       card_not_needed,
       card_text,
-      comment: (el("comment").value || "").trim()
+      comment: (el("comment").value || "").trim(),
+
+      clarify_address_with_recipient,      bonus_to_spend,
+      pd_consent: true
     };
 
     // Telegram WebApp context
@@ -1566,8 +1613,10 @@
         tg.ready();
         tg.expand?.();
         const u = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : null;
+        if (tg.initData) payload.tg_init_data = tg.initData;
         if (u){
           payload.tg_user_id = u.id || 0;
+          payload.tg_init_data = tg.initData || "";
           payload.tg_username = u.username || "";
           payload.tg_first_name = u.first_name || "";
           payload.tg_last_name = u.last_name || "";
@@ -1669,7 +1718,15 @@
   }
 
   // ====== INIT ======
-  function initForm(){
+  
+  const PRIVACY_TEXT =
+`политика конфиденциальности
+мы обрабатываем только данные, необходимые для оформления и исполнения заказа: имя, телефон, адрес доставки, комментарии к заказу, а также технические идентификаторы telegram (id/username), если они доступны.
+данные используются для связи, подтверждения заказа, организации доставки и бухгалтерского учёта.
+мы не продаём и не передаём персональные данные третьим лицам, кроме случаев, когда это необходимо для исполнения заказа (например, курьерской службе).
+срок хранения: до достижения целей обработки и в пределах, установленных законом.
+контакты для вопросов: @chaiori (9:00–21:00 мск).`;
+function initForm(){
     el("date").value = todayISO();
     loadFormDraft();
 
@@ -1699,6 +1756,7 @@
         el("address").placeholder = "пример: город, улица, дом, подъезд, квартира";
       }
 
+      updateBonusConstraints();
       renderSummary();
       saveFormDraft();
     });
@@ -1716,7 +1774,9 @@
     el("recipientName").addEventListener("input", saveFormDraft);
     el("recipientPhone").addEventListener("input", saveFormDraft);
     el("address").addEventListener("input", saveFormDraft);
-    el("timeSlot").addEventListener("change", () => { renderSummary(); saveFormDraft(); });
+    el("timeSlot").addEventListener("change", () => { updateBonusConstraints(); renderSummary(); saveFormDraft(); });
+
+    el("bonusToSpend").addEventListener("input", () => { updateBonusConstraints(); renderSummary(); saveFormDraft(); });
 
     el("cardNotNeeded").addEventListener("change", () => {
       const off = el("cardNotNeeded").checked;
@@ -1762,6 +1822,11 @@
 
     el("submitOrder").addEventListener("click", submitOrder);
 
+    el("openPrivacy").addEventListener("click", (e)=>{
+      e.preventDefault();
+      showUX({ title: "политика", text: PRIVACY_TEXT, actions: [{ text: "закрыть", kind: "primary" }] });
+    });
+
     el("uxCloseBtn").addEventListener("click", closeUX);
     el("uxOverlay").addEventListener("click", (e) => {
       if (e.target === el("uxOverlay")) closeUX();
@@ -1771,7 +1836,45 @@
   }
 
   async function boot(){
-    initUI();
+    
+  async function loadBonusBalance(){
+    const ctx = getTelegramContext();
+    const uid = ctx.user && ctx.user.id ? Number(ctx.user.id) : 0;
+    if (!uid && !ctx.initData){
+      bonusBalance = null;
+      updateBonusConstraints();
+      return;
+    }
+
+    try{
+      const payload = {
+        action: "get_bonus",
+        tg_user_id: uid || 0,
+        tg_init_data: ctx.initData || ""
+      };
+
+      const res = await fetch(API_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+      const raw = await res.text();
+      const json = safeJsonParse(raw);
+
+      if (!res.ok) throw new Error(raw || `http ${res.status}`);
+      if (json && json.status === "ok"){
+        bonusBalance = Number(json.balance) || 0;
+      } else {
+        bonusBalance = 0;
+      }
+    } catch(_){
+      bonusBalance = 0;
+    } finally{
+      updateBonusConstraints();
+      renderSummary();
+    }
+  }
+initUI();
 
     try{
       const tg = window.Telegram?.WebApp;
@@ -1780,6 +1883,38 @@
         tg.expand?.();
         setAppHeight();
         tg.onEvent?.("viewportChanged", setAppHeight);
+        
+      // тема telegram: синхронизация переменных и акцентов
+      const applyTheme = () => {
+        try{
+          const tg2 = window.Telegram?.WebApp;
+          const tp = tg2?.themeParams || {};
+          const isDark = tg2?.colorScheme === "dark";
+          document.documentElement.dataset.theme = isDark ? "dark" : "light";
+
+          // базовые цвета берем из телеграма, но сохраняем винный бренд
+          if (tp.bg_color) document.documentElement.style.setProperty("--tg-theme-bg-color", tp.bg_color);
+          if (tp.text_color) document.documentElement.style.setProperty("--tg-theme-text-color", tp.text_color);
+          if (tp.hint_color) document.documentElement.style.setProperty("--tg-theme-hint-color", tp.hint_color);
+          if (tp.secondary_bg_color) document.documentElement.style.setProperty("--tg-theme-secondary-bg-color", tp.secondary_bg_color);
+
+          // смягчаем "голубую дымку" в тёмной теме, чтобы не было выжженного оттенка
+          if (isDark){
+            document.documentElement.style.setProperty("--bgTint", "rgba(180,210,240,.10)");
+            document.documentElement.style.setProperty("--glassBlue", "rgba(30,34,38,.70)");
+            document.documentElement.style.setProperty("--glassBlueSoft", "rgba(30,34,38,.55)");
+            document.documentElement.style.setProperty("--stroke", "rgba(255,255,255,.10)");
+          } else {
+            document.documentElement.style.setProperty("--bgTint", "rgba(207,232,255,.28)");
+            document.documentElement.style.setProperty("--glassBlue", "rgba(207,232,255,.55)");
+            document.documentElement.style.setProperty("--glassBlueSoft", "rgba(207,232,255,.35)");
+            document.documentElement.style.setProperty("--stroke", "rgba(120,2,14,.10)");
+          }
+        } catch(_) {}
+      };
+      applyTheme();
+      try{ window.Telegram?.WebApp?.onEvent?.("themeChanged", applyTheme); } catch(_) {}
+
       } else {
         setAppHeight();
       }
@@ -1792,6 +1927,7 @@
     recomputeCartCaches();
     updateBottom();
     updateCheckoutButtons();
+    updateBonusConstraints();
 
     try{
       el("grid").innerHTML = `
@@ -1807,6 +1943,8 @@
       updateCheckoutButtons();
 
       initForm();
+
+      await loadBonusBalance();
     } catch (err){
       console.error(err);
       el("grid").innerHTML = `
