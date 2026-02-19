@@ -746,13 +746,6 @@ const fmt = (n) => new Intl.NumberFormat("ru-RU").format(Number(n) || 0) + " ₽
     const m = min%60;
     return `${pad2(h)}:${pad2(m)}`;
   }
-
-  function hmToMinutes(hm){
-    const [h,m] = String(hm||'').split(':').map(x=>parseInt(x,10));
-    if (isNaN(h) || isNaN(m)) return 0;
-    return h*60 + m;
-  }
-
   function ceilToStep(min, step){
     return Math.ceil(min/step)*step;
   }
@@ -894,33 +887,25 @@ const fmt = (n) => new Intl.NumberFormat("ru-RU").format(Number(n) || 0) + " ₽
     imgEl.src = list[0];
   }
 
-  // СЛОТЫ: рабочее время 10:00–22:00.
-  // будущие дни: фиксированные интервалы 4 часа.
-  // сегодня: показываем только те интервалы, в которые физически можно успеть:
-  // условие: конец интервала >= (сейчас + 3 часа) и интервал не полностью в прошлом.
+  // СЛОТЫ: только 10:00–22:00; ночью начинаем от 10:00
   function availableSlotsForDate(dateISO){
-    const blocks = TIME_SLOTS.slice(); // ["10:00-14:00","14:00-18:00","18:00-22:00"]
-
-    if (dateISO !== todayISO()) return blocks;
+    if (dateISO !== todayISO()) return TIME_SLOTS.slice();
 
     const now = minutesNow();
-    const earliest = now + DYNAMIC_LEAD_MINUTES;
 
-    const out = [];
-    for (const s of blocks){
-      const parts = String(s).split("-");
-      if (parts.length !== 2) continue;
-      const start = hmToMinutes(parts[0]);
-      const end = hmToMinutes(parts[1]);
+    const start = Math.max(
+      WORK_START_MINUTES,
+      ceilToStep(now + DYNAMIC_LEAD_MINUTES, SLOT_STEP_MINUTES)
+    );
 
-      if (end <= now) continue;         // полностью в прошлом
-      if (earliest > end) continue;     // не успеваем попасть в интервал до его конца
+    if (start >= WORK_END_MINUTES) return [];
 
-      out.push(s);
+    const slots = [];
+    for (let t = start; t < WORK_END_MINUTES; t += SLOT_STEP_MINUTES){
+      const end = Math.min(t + TODAY_WINDOW_MINUTES, WORK_END_MINUTES);
+      if ((end - t) < 60) continue;
+      slots.push(`${toHM(t)}-${toHM(end)}`);
     }
-    return out;
-  }
-
     return slots;
   }
 
@@ -1952,6 +1937,7 @@ initUI();
       `;
 
       await loadProducts();
+      try{ const db=el("debugBar"); db.style.display="block"; db.textContent = `товаров: ${products.length}`; }catch(_){}
       renderFilters();
       renderGrid();
       updateBottom();
