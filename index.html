@@ -2,16 +2,17 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
+  <!-- фикс iOS-зума + стабильный viewport -->
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <title>дарицветы.москва — доставка цветов</title>
 
   <!-- telegram webapp sdk -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- font (тоньше) -->
+  <!-- fonts: base + "изюминка" только для бренда -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
 
   <style>
     :root{
@@ -19,16 +20,22 @@
       --sky:#CFE8FF;     /* bounty */
       --wine:#78020E;    /* delicious wine */
 
-      /* base */
-      --bg:#FFFFFF;
+      /* background "дымка" */
+      --bg:#ffffff;
+      --bgTint: rgba(207,232,255,.28);
+
+      /* text */
       --text:#1C1C1E;
       --muted:#6B6B73;
 
       /* surfaces */
       --card:#FFFFFF;
-      --stroke:rgba(120,2,14,.14);
 
-      /* accents */
+      /* strokes + glass */
+      --stroke:rgba(120,2,14,.10);
+      --glassBlue: rgba(207,232,255,.55);
+      --glassBlueSoft: rgba(207,232,255,.35);
+
       --primary:var(--wine);
       --primaryActive:#5d010a;
 
@@ -36,6 +43,8 @@
       --secondaryActive:#bfe0ff;
 
       --radius:22px;
+
+      /* фикс высоты под telegram webapp */
       --app-h: 100vh;
     }
 
@@ -48,7 +57,7 @@
     }
     body{
       font-family:"Manrope",-apple-system,system-ui,"SF Pro Text","SF Pro Display",Segoe UI,Roboto,Arial,sans-serif;
-      background:var(--bg);
+      background: linear-gradient(180deg, var(--bgTint), var(--bg) 260px);
       color:var(--text);
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
@@ -67,22 +76,31 @@
     }
     .brand{line-height:1.1}
     .brand .name{
+      font-family:"Fraunces","Manrope",serif;
       font-size:22px;
       font-weight:700;
-      letter-spacing:.1px;
+      letter-spacing:.2px;
       color:var(--wine);
       text-transform:lowercase;
     }
-    .brand .tag{margin-top:6px;font-size:13px;color:var(--muted);font-weight:500}
+    .brand .tag{
+      margin-top:6px;
+      font-size:13px;
+      color:var(--muted);
+      font-weight:500;
+      text-transform:lowercase;
+    }
 
     .pill{
-      border:1px solid var(--stroke);
-      background:rgba(255,255,255,.92);
+      border:1px solid rgba(120,2,14,.12);
+      background:var(--glassBlueSoft);
+      backdrop-filter: blur(12px);
       padding:10px 12px;
       border-radius:999px;
       font-size:13px;
       display:flex;align-items:center;gap:10px;
       align-self:center;
+      box-shadow: 0 10px 26px rgba(207,232,255,.18);
     }
     .pill button{
       border:none;background:transparent;color:var(--wine);
@@ -94,7 +112,7 @@
       background:var(--sky);
       display:flex;align-items:center;justify-content:center;
       font-weight:700;font-size:12px;
-      border:1px solid rgba(120,2,14,.18);
+      border:1px solid rgba(120,2,14,.16);
       color:var(--wine);
     }
 
@@ -120,8 +138,9 @@
       color:var(--wine);
     }
     .chip.on{
-      background:var(--sky);
-      border-color:rgba(120,2,14,.18);
+      background: var(--sky);
+      border-color: rgba(120,2,14,.12);
+      box-shadow: 0 8px 18px rgba(207,232,255,.35);
     }
 
     .grid{
@@ -140,7 +159,7 @@
       border:1px solid var(--stroke);
       border-radius:var(--radius);
       overflow:hidden;
-      box-shadow:0 6px 18px rgba(0,0,0,.06);
+      box-shadow:0 10px 26px rgba(0,0,0,.06);
       display:flex;flex-direction:column;
       min-height:260px;
     }
@@ -179,15 +198,20 @@
       font-weight:600;font-size:13px;
       text-transform:lowercase;
       user-select:none;
+      transition: transform .06s ease;
     }
+    .btn:active{ transform: translateY(1px); }
+
     .btn.primary{ background:var(--primary); color:#fff; }
     .btn.primary:active{ background:var(--primaryActive); }
+
     .btn.secondary{ background:var(--secondary); color:var(--wine); }
     .btn.secondary:active{ background:var(--secondaryActive); }
 
     .btn:disabled{
       opacity:.45;
       cursor:not-allowed;
+      transform:none;
     }
 
     .qty{
@@ -195,7 +219,7 @@
       border:1px solid var(--stroke);
       border-radius:16px;
       padding:6px 8px;
-      background:rgba(255,255,255,.95);
+      background:rgba(255,255,255,.96);
     }
     .qty button{
       width:32px;height:32px;border-radius:14px;border:none;cursor:pointer;
@@ -222,7 +246,7 @@
       background:var(--card);
       border-radius:26px;
       border:1px solid var(--stroke);
-      box-shadow:0 14px 40px rgba(0,0,0,.18);
+      box-shadow:0 18px 60px rgba(0,0,0,.18);
       overflow:hidden;
       max-height:calc(var(--app-h) - 20px);
       display:flex;
@@ -234,6 +258,7 @@
       display:flex;align-items:center;justify-content:space-between;
       border-bottom:1px solid var(--stroke);
       flex:0 0 auto;
+      background: rgba(207,232,255,.28);
     }
     .sheetHeader .h{
       font-weight:700;
@@ -340,24 +365,30 @@
       text-transform:lowercase;
     }
 
+    /* 16px фиксит авто-zoom на iOS */
     input, select, textarea{
       font-family:inherit;
-      font-size:16px; /* фикс авто-zoom на iOS */
+      font-size:16px;
       padding:12px 12px;
       border-radius:16px;
       border:1px solid var(--stroke);
       background:#fff;
       outline:none;
       font-weight:400;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(120,2,14,.18);
+      box-shadow: 0 0 0 4px rgba(207,232,255,.45);
     }
     textarea{min-height:90px;resize:vertical}
 
     .summary{
       margin-top:12px;
-      border:1px solid var(--stroke);
+      border:1px solid rgba(120,2,14,.12);
       border-radius:var(--radius);
       padding:12px;
-      background:rgba(120,2,14,.03);
+      background: rgba(207,232,255,.35);
       display:flex;flex-direction:column;gap:6px;
       font-size:13px;
     }
@@ -373,10 +404,11 @@
 
     .bottomBar{
       position:fixed;left:0;right:0;bottom:0;
-      background:rgba(255,255,255,.92);
+      background: var(--glassBlue);
       backdrop-filter: blur(12px);
-      border-top:1px solid var(--stroke);
+      border-top:1px solid rgba(120,2,14,.12);
       padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+      box-shadow: 0 -10px 26px rgba(207,232,255,.22);
     }
     .bottomInner{
       max-width:980px;margin:0 auto;
@@ -407,7 +439,7 @@
       background:#fff;
       border:1px solid var(--stroke);
       border-radius:26px;
-      box-shadow:0 16px 44px rgba(0,0,0,.20);
+      box-shadow:0 18px 60px rgba(0,0,0,.20);
       overflow:hidden;
     }
     .uxCardHeader{
@@ -416,6 +448,7 @@
       align-items:center;
       justify-content:space-between;
       border-bottom:1px solid var(--stroke);
+      background: rgba(207,232,255,.28);
     }
     .uxCardHeader .t{
       font-weight:700;
@@ -443,11 +476,12 @@
       justify-content:flex-end;
     }
 
+    /* loader в кнопке */
     .spinner{
       width:16px;height:16px;
       border-radius:999px;
       border:3px solid rgba(0,0,0,.12);
-      border-top-color: rgba(120,2,14,.85);
+      border-top-color: rgba(255,255,255,.92);
       display:inline-block;
       animation:spin .8s linear infinite;
       vertical-align:middle;
@@ -456,6 +490,7 @@
 
     @media (prefers-reduced-motion: reduce){
       .spinner{ animation:none; }
+      .btn{ transition:none; }
     }
   </style>
 </head>
@@ -632,17 +667,25 @@
 <script>
   // ====== CONFIG ======
   const API_BASE = "https://script.google.com/macros/s/AKfycbzdOFj8B64mrN1q_cmdhjOkvG4KsgZZP-6b2lpfdXBQ2-JUz3juEYcr76iPrvp5lGEhbA/exec";
+
+  // поддержка
   const SUPPORT_USERNAME = "chaiori";
   const SUPPORT_URL = `https://t.me/${SUPPORT_USERNAME}`;
 
+  // фиксированные слоты на будущие дни
   const TIME_SLOTS = ["10:00-14:00","14:00-18:00","18:00-22:00"];
+
+  // динамика на сегодня: +3 часа, округление до 30 минут
   const DYNAMIC_LEAD_MINUTES = 180;
   const SLOT_STEP_MINUTES = 30;
-  const WORK_START_MINUTES = 10*60;
-  const WORK_END_MINUTES   = 22*60;
+
+  // РАБОЧЕЕ ВРЕМЯ ДОСТАВКИ
+  const WORK_START_MINUTES = 10*60; // 10:00
+  const WORK_END_MINUTES   = 22*60; // 22:00
+
   const DELIVERY_MKAD = 650;
 
-  // localStorage keys
+  // localStorage
   const LS_CART = "dc_cart_v1";
   const LS_FORM = "dc_form_v1";
   const LS_PRODUCTS_CACHE = "dc_products_v1";
@@ -663,22 +706,21 @@
   let _cartCount = 0;
   let _cartSubtotal = 0;
 
-  // ====== DOM ======
-  const el = (id) => document.getElementById(id);
-  const gridEl = () => el("grid");
-
   // ====== HELPERS ======
   const fmt = (n) => new Intl.NumberFormat("ru-RU").format(Number(n) || 0) + " ₽";
+  const el = (id) => document.getElementById(id);
 
   function todayISO(){
     const d = new Date();
     const tz = new Date(d.getTime() - d.getTimezoneOffset()*60000);
     return tz.toISOString().slice(0,10);
   }
+
   function minutesNow(){
     const d = new Date();
     return d.getHours()*60 + d.getMinutes();
   }
+
   function pad2(n){ return String(n).padStart(2,"0"); }
   function toHM(min){
     const h = Math.floor(min/60);
@@ -695,16 +737,6 @@
 
   function nonEmptyPhotos(arr){
     return (Array.isArray(arr) ? arr : []).map(x => String(x || "").trim()).filter(Boolean);
-  }
-
-  // ====== TG DIAG (hash only) ======
-  function fnv1a32(str){
-    let h = 0x811c9dc5;
-    for (let i = 0; i < str.length; i++){
-      h ^= str.charCodeAt(i);
-      h = (h + ((h<<1) + (h<<4) + (h<<7) + (h<<8) + (h<<24))) >>> 0;
-    }
-    return ("0000000" + h.toString(16)).slice(-8);
   }
 
   // ===== стабилизация высоты webapp =====
@@ -776,12 +808,15 @@
 
   function showSuccessUX(orderId){
     const code4 = shortOrderCode(orderId);
-    const txt = `заказ отправлен.\nномер: ${code4}.\nмы свяжемся для подтверждения и оплаты.`;
+    const txt =
+      `заказ отправлен.\nномер: ${code4}.\nмы свяжемся для подтверждения и оплаты.`;
 
     showUX({
       title: "готово",
       text: txt,
-      actions: [{ text: "вернуться в каталог", kind: "primary", onClick: ()=>{} }]
+      actions: [
+        { text: "вернуться в каталог", kind: "primary", onClick: ()=>{} }
+      ]
     });
   }
 
@@ -806,6 +841,7 @@
     if (!url) return [];
     const id = extractDriveId(url);
     if (!id) return [String(url)];
+
     return [
       `https://drive.google.com/thumbnail?id=${id}&sz=w2000`,
       `https://drive.google.com/uc?export=view&id=${id}`,
@@ -832,11 +868,12 @@
     imgEl.src = list[0];
   }
 
-  // ===== SLOTS =====
+  // СЛОТЫ: только 10:00–22:00; ночью начинаем от 10:00
   function availableSlotsForDate(dateISO){
     if (dateISO !== todayISO()) return TIME_SLOTS.slice();
 
     const now = minutesNow();
+
     const start = Math.max(
       WORK_START_MINUTES,
       ceilToStep(now + DYNAMIC_LEAD_MINUTES, SLOT_STEP_MINUTES)
@@ -853,10 +890,7 @@
     return slots;
   }
 
-  // ===== CART (fast) =====
-  function cartCount(){ return _cartCount; }
-  function cartSubtotal(){ return _cartSubtotal; }
-
+  // ===== CART FAST =====
   function recomputeCartCaches(){
     let count = 0;
     let sum = 0;
@@ -868,6 +902,8 @@
     _cartCount = count;
     _cartSubtotal = sum;
   }
+  function cartCount(){ return _cartCount; }
+  function cartSubtotal(){ return _cartSubtotal; }
 
   function getCartItemsArray(){
     const out = [];
@@ -900,26 +936,6 @@
     } catch(_) {}
   }
 
-  function setQty(id, qty){
-    const key = String(id);
-    if (qty <= 0) cart.delete(key);
-    else cart.set(key, qty);
-
-    recomputeCartCaches();
-    saveCart();
-
-    // точечные обновления
-    updateBottom();
-    updateCheckoutButtons();
-
-    // обновляем карточку в гриде без полного ререндера: проще/надежнее — ререндерим grid,
-    // но с fragment и быстрым доступом это нормально (и стабильнее)
-    renderGrid();
-
-    // если открыт товар — обновим controls
-    if (currentProductId && String(currentProductId) === key) renderProductControls();
-  }
-
   function updateCheckoutButtons(){
     const hasItems = cartCount() > 0;
     el("checkoutBtn").disabled = !hasItems;
@@ -932,6 +948,23 @@
     el("bottomCount").textContent = count;
     el("bottomTotal").textContent = fmt(cartSubtotal());
     el("bottomBar").style.display = count > 0 ? "block" : "none";
+  }
+
+  function setQty(id, qty){
+    const key = String(id);
+    if (qty <= 0) cart.delete(key);
+    else cart.set(key, qty);
+
+    recomputeCartCaches();
+    saveCart();
+
+    renderGrid();
+    updateBottom();
+    updateCheckoutButtons();
+
+    if (currentProductId && String(currentProductId) === key) {
+      renderProductControls();
+    }
   }
 
   function deliveryCost(){
@@ -965,27 +998,28 @@
     allChip.onclick = () => { activeCategory = "all"; renderFilters(); renderGrid(); };
     frag.appendChild(allChip);
 
-    for (const c of categories){
+    categories.forEach(c => {
       const chip = document.createElement("button");
       chip.className = "chip" + (activeCategory === c ? " on" : "");
       chip.textContent = c.toLowerCase();
       chip.onclick = () => { activeCategory = c; renderFilters(); renderGrid(); };
       frag.appendChild(chip);
-    }
+    });
 
     root.appendChild(frag);
   }
 
   // ====== UI: GRID ======
   function renderGrid(){
-    const grid = gridEl();
+    const grid = el("grid");
     grid.innerHTML = "";
 
     if (!Array.isArray(products) || products.length === 0){
       grid.innerHTML = `
         <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:400; text-transform:lowercase;">
           товаров пока нет
-        </div>`;
+        </div>
+      `;
       return;
     }
 
@@ -997,15 +1031,15 @@
       grid.innerHTML = `
         <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:400; text-transform:lowercase;">
           в этой категории пока нет товаров
-        </div>`;
+        </div>
+      `;
       return;
     }
 
     const frag = document.createDocumentFragment();
 
-    for (const p of shown){
+    shown.forEach(p => {
       const id = String(p.id);
-
       const card = document.createElement("div");
       card.className = "card";
 
@@ -1017,7 +1051,6 @@
       img.alt = p.name || "";
       img.loading = "lazy";
       img.decoding = "async";
-
       const photos = nonEmptyPhotos(p.photos);
       if (photos[0]) setImgWithFallback(img, photos[0]);
       thumb.appendChild(img);
@@ -1069,12 +1102,11 @@
 
       card.append(thumb, content);
       frag.appendChild(card);
-    }
+    });
 
     grid.appendChild(frag);
   }
 
-  // делегирование событий для грида (быстрее, меньше слушателей)
   function onGridClick(e){
     const t = e.target;
 
@@ -1150,7 +1182,6 @@
       dots.appendChild(d);
     });
 
-    // свайп: ставим обработчики один раз на элемент
     const gallery = el("gallery");
     if (!gallery.dataset.swipeBound){
       gallery.dataset.swipeBound = "1";
@@ -1189,7 +1220,10 @@
       const btn = document.createElement("button");
       btn.className = "btn primary";
       btn.textContent = "в корзину";
-      btn.addEventListener("click", () => { setQty(id, 1); });
+      btn.addEventListener("click", () => {
+        setQty(id, 1);
+        updateCheckoutButtons();
+      });
       box.appendChild(btn);
     } else {
       const q = document.createElement("div");
@@ -1197,14 +1231,14 @@
 
       const minus = document.createElement("button");
       minus.textContent = "–";
-      minus.addEventListener("click", () => { setQty(id, qty-1); });
+      minus.addEventListener("click", () => { setQty(id, qty-1); updateCheckoutButtons(); });
 
       const n = document.createElement("span");
       n.textContent = qty;
 
       const plus = document.createElement("button");
       plus.textContent = "+";
-      plus.addEventListener("click", () => { setQty(id, qty+1); });
+      plus.addEventListener("click", () => { setQty(id, qty+1); updateCheckoutButtons(); });
 
       q.append(minus, n, plus);
       box.appendChild(q);
@@ -1234,7 +1268,7 @@
 
     const frag = document.createDocumentFragment();
 
-    for (const it of items){
+    items.forEach(it => {
       const row = document.createElement("div");
       row.style.display = "flex";
       row.style.gap = "10px";
@@ -1282,7 +1316,7 @@
 
       row.append(left, q);
       frag.appendChild(row);
-    }
+    });
 
     root.appendChild(frag);
     renderSummary();
@@ -1456,6 +1490,7 @@
     const customer_phone = el("customerPhone").value.trim();
 
     const delivery_type = el("deliveryType").value;
+
     const address = el("address").value.trim();
     const date = el("date").value;
     const time_slot = el("timeSlot").value;
@@ -1498,21 +1533,15 @@
     const payload = {
       action: "create_order",
 
-      // tg fields (fill below)
+      // tg fields (если webapp открыт корректно)
       tg_user_id: 0,
       tg_username: "",
       tg_first_name: "",
       tg_last_name: "",
 
-      // diag (fill below)
-      tg_init_data_len: 0,
-      tg_init_data_hash: "",
-      tg_platform: "",
-      tg_version: "",
-      tg_is_webapp: false,
-
       customer_name,
       customer_phone: normalizePhoneRU(customer_phone),
+
       recipient_name,
       recipient_phone: normalizePhoneRU(recipient_phone),
       same_as_customer: same,
@@ -1522,42 +1551,34 @@
       time_slot,
       delivery_type,
       delivery_price,
-
       total: (delivery_type === "mkad") ? (cartSubtotal() + DELIVERY_MKAD) : cartSubtotal(),
-
       items: items.map(it => ({ id: it.id, name: it.name, qty: it.qty, price: it.price })),
+
       card_not_needed,
       card_text,
       comment: (el("comment").value || "").trim()
     };
 
-    // Telegram WebApp context + DIAG (без сохранения initData целиком)
+    // Telegram WebApp context
     try{
       const tg = window.Telegram?.WebApp;
-
-      payload.tg_is_webapp = !!tg;
-      payload.tg_platform = tg?.platform || "";
-      payload.tg_version = tg?.version || "";
-
-      const initData = tg?.initData || "";
-      payload.tg_init_data_len = initData ? initData.length : 0;
-      payload.tg_init_data_hash = initData ? fnv1a32(initData) : "";
-
-      const u = tg?.initDataUnsafe?.user || null;
-      if (u){
-        payload.tg_user_id = u.id || 0;
-        payload.tg_username = u.username || "";
-        payload.tg_first_name = u.first_name || "";
-        payload.tg_last_name = u.last_name || "";
+      if (tg){
+        tg.ready();
+        tg.expand?.();
+        const u = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : null;
+        if (u){
+          payload.tg_user_id = u.id || 0;
+          payload.tg_username = u.username || "";
+          payload.tg_first_name = u.first_name || "";
+          payload.tg_last_name = u.last_name || "";
+        }
       }
-
-      tg?.ready?.();
-      tg?.expand?.();
     } catch(_) {}
 
     setSubmitLoading(true);
 
     try{
+      // ВАЖНО: text/plain -> без preflight, стабильнее для GAS
       const res = await fetch(API_BASE, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -1576,18 +1597,14 @@
 
       const orderId = json?.order_id || "";
 
-      // reset cart
       cart = new Map();
       recomputeCartCaches();
       saveCart();
+
       updateBottom();
       renderGrid();
-
       closeCart();
       closeProduct();
-
-      // draft form stays (удобно), но можно очистить:
-      // localStorage.removeItem(LS_FORM);
 
       showSuccessUX(orderId);
     } catch(err){
@@ -1646,20 +1663,19 @@
     }));
 
     productsById = new Map();
-    for (const p of products) productsById.set(String(p.id), p);
+    products.forEach(p => productsById.set(String(p.id), p));
 
     categories = Array.from(new Set(products.map(getCategory))).filter(Boolean);
   }
 
-  // ====== INIT FORM/UI ======
+  // ====== INIT ======
   function initForm(){
-    // draft
     el("date").value = todayISO();
     loadFormDraft();
 
     renderTimeSlots();
 
-    // try keep selected time slot if possible
+    // keep selection if possible
     const desired = el("timeSlot").value;
     if (desired){
       const options = Array.from(el("timeSlot").options).map(o => o.value);
@@ -1751,8 +1767,7 @@
       if (e.target === el("uxOverlay")) closeUX();
     });
 
-    // grid events
-    gridEl().addEventListener("click", onGridClick);
+    el("grid").addEventListener("click", onGridClick);
   }
 
   async function boot(){
@@ -1773,29 +1788,28 @@
     }
     window.addEventListener("resize", setAppHeight);
 
-    // cart first
     loadCart();
     recomputeCartCaches();
     updateBottom();
     updateCheckoutButtons();
 
-    // show loading
-    gridEl().innerHTML = `
-      <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:400; text-transform:lowercase;">
-        загружаем товары…
-      </div>
-    `;
-
     try{
+      el("grid").innerHTML = `
+        <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:400; text-transform:lowercase;">
+          загружаем товары…
+        </div>
+      `;
+
       await loadProducts();
       renderFilters();
       renderGrid();
       updateBottom();
       updateCheckoutButtons();
+
       initForm();
     } catch (err){
       console.error(err);
-      gridEl().innerHTML = `
+      el("grid").innerHTML = `
         <div style="grid-column:1/-1; padding:14px; border:1px solid var(--stroke); border-radius:var(--radius); background:#fff; color:var(--muted); font-weight:400; text-transform:lowercase;">
           не удалось загрузить каталог: <span style="color:var(--wine); font-weight:600;">${String(err?.message || "ошибка")}</span>
           <div style="margin-top:10px;">
