@@ -48,23 +48,6 @@
       --app-h: 100vh;
     }
 
-
-
-    body[data-theme="dark"]{
-      --bg:#17181a;
-      --bgTint:rgba(120,2,14,.14);
-      --text:#f4f4f5;
-      --muted:#b2b3bb;
-      --card:#222327;
-      --stroke:rgba(255,255,255,.10);
-      --glassBlue: rgba(28,29,33,.92);
-      --glassBlueSoft: rgba(33,34,39,.88);
-      --secondary:#2b2c31;
-      --secondaryActive:#34353c;
-      --primary:#8e1c29;
-      --primaryActive:#7a1320;
-    }
-
     *{box-sizing:border-box}
     html, body{
       height:100%;
@@ -581,7 +564,7 @@
             <label>тип доставки</label>
             <select id="deliveryType">
               <option value="mkad">москва (в пределах мкад) — 650 ₽</option>
-              <option value="pickup">самовывоз — автозаводская 23с2</option>
+              <option value="pickup">самовывоз — Автозаводская 23с2</option>
               <option value="outside">за мкад — стоимость уточним</option>
             </select>
           </div>
@@ -652,48 +635,16 @@
             <label>комментарий (необязательно)</label>
             <textarea id="comment" placeholder="например: код домофона, пожелания по ленте"></textarea>
           </div>
-
-          <div class="sectionTitle">дополнительно</div>
-
-          <div class="field">
-            <label style="display:flex; align-items:center; gap:10px;">
-              <input id="needCallback" type="checkbox" />
-              обратный звонок
-            </label>
-          </div>
-
-          <div class="field">
-            <label style="display:flex; align-items:center; gap:10px;">
-              <input id="clarifyAddressRecipient" type="checkbox" />
-              уточнить адрес у получателя
-            </label>
-          </div>
-
-          <div class="field">
-            <label style="display:flex; align-items:center; gap:10px;">
-              <input id="useBonuses" type="checkbox" />
-              списать бонусы при покупке
-            </label>
-          </div>
-
-          <div class="field">
-            <label style="display:flex; align-items:center; gap:10px;">
-              <input id="pdnConsent" type="checkbox" />
-              согласен на обработку персональных данных
-            </label>
-          </div>
         </div>
 
         <div class="summary" id="summary"></div>
-        <div class="hint" id="bonusHint">бонусы: загружаем…</div>
-        <div class="hint">нажимая «отправить заказ», вы принимаете <button class="iconBtn" style="font-size:12px;padding:0;" id="privacyBtn">политику конфиденциальности</button>.</div>
 
         <button class="btn primary" id="submitOrder" style="width:100%; margin-top:12px; padding:14px 12px; border-radius:18px;">
           отправить заказ
         </button>
 
         <div class="hint">
-          оплата: после подтверждения заказа пришлём ссылку на оплату. поддержка 9:00–21:00 мск
+          оплата: после подтверждения заказа мы пришлём ссылку на оплату
         </div>
       </div>
     </div>
@@ -738,7 +689,6 @@
   const LS_CART = "dc_cart_v1";
   const LS_FORM = "dc_form_v1";
   const LS_PRODUCTS_CACHE = "dc_products_v1";
-  const LS_BONUS = "dc_bonus_v1";
 
   // ====== STATE ======
   let products = [];
@@ -755,8 +705,6 @@
   // perf caches
   let _cartCount = 0;
   let _cartSubtotal = 0;
-  let tgUser = { id: 0, username: "", first_name: "", last_name: "" };
-  let bonusBalance = 0;
 
   // ====== HELPERS ======
   const fmt = (n) => new Intl.NumberFormat("ru-RU").format(Number(n) || 0) + " ₽";
@@ -785,12 +733,6 @@
 
   function safeJsonParse(text){
     try { return JSON.parse(text); } catch(_) { return null; }
-  }
-
-  function detectTheme(){
-    const tg = window.Telegram?.WebApp;
-    const isDark = tg?.colorScheme === "dark";
-    document.body.setAttribute("data-theme", isDark ? "dark" : "light");
   }
 
   function nonEmptyPhotos(arr){
@@ -1411,8 +1353,6 @@
     const dCost = deliveryCost();
 
     const lines = [];
-    const canUseBonuses = el("useBonuses").checked;
-    const maxBonus = Math.max(0, Math.min(bonusBalance, (dType === "mkad" ? sub + DELIVERY_MKAD : sub)));
     lines.push(`<div class="line"><span>товары</span><span>${fmt(sub)}</span></div>`);
 
     if (dType === "mkad"){
@@ -1420,46 +1360,14 @@
       lines.push(`<div class="line total"><span>итого</span><span>${fmt(sub + dCost)}</span></div>`);
     } else if (dType === "pickup"){
       lines.push(`<div class="line"><span>самовывоз</span><span>${fmt(0)}</span></div>`);
-      lines.push(`<div class="line"><span>адрес</span><span>автозаводская 23с2</span></div>`);
+      lines.push(`<div class="line"><span>адрес</span><span>Автозаводская 23с2</span></div>`);
       lines.push(`<div class="line total"><span>итого</span><span>${fmt(sub)}</span></div>`);
     } else {
       lines.push(`<div class="line"><span>доставка</span><span>уточним</span></div>`);
       lines.push(`<div class="line total"><span>итого</span><span>${fmt(sub)}</span></div>`);
     }
 
-    if (canUseBonuses && maxBonus > 0){
-      lines.push(`<div class="line"><span>бонусы</span><span>- ${fmt(maxBonus)}</span></div>`);
-      const finalTotal = Math.max(0, (dType === "mkad" ? sub + DELIVERY_MKAD : sub) - maxBonus);
-      lines.push(`<div class="line total"><span>к оплате</span><span>${fmt(finalTotal)}</span></div>`);
-    }
-
     el("summary").innerHTML = lines.join("");
-  }
-
-  async function loadBonusBalance(){
-    const hint = el("bonusHint");
-    if (!tgUser.id){
-      bonusBalance = 0;
-      hint.textContent = "бонусы: чтобы применить, откройте mini app из telegram";
-      renderSummary();
-      return;
-    }
-    try{
-      const res = await fetch(API_BASE, {
-        method:"POST",
-        headers:{"Content-Type":"text/plain;charset=utf-8"},
-        body: JSON.stringify({ action:"get_profile", tg_user_id: tgUser.id })
-      });
-      const raw = await res.text();
-      const json = safeJsonParse(raw) || {};
-      bonusBalance = Number(json.bonus_balance || 0) || 0;
-      localStorage.setItem(LS_BONUS, String(bonusBalance));
-      hint.textContent = `бонусы: доступно ${fmt(bonusBalance)} · можно списать при покупке`;
-    } catch(_){
-      bonusBalance = Number(localStorage.getItem(LS_BONUS) || 0) || 0;
-      hint.textContent = `бонусы: доступно ${fmt(bonusBalance)} · можно списать при покупке`;
-    }
-    renderSummary();
   }
 
   // ===== PHONE MASK + VALIDATION =====
@@ -1527,11 +1435,7 @@
         recipientPhone: el("recipientPhone").value,
         cardNotNeeded: el("cardNotNeeded").checked,
         cardText: el("cardText").value,
-        comment: el("comment").value,
-        needCallback: el("needCallback").checked,
-        clarifyAddressRecipient: el("clarifyAddressRecipient").checked,
-        useBonuses: el("useBonuses").checked,
-        pdnConsent: el("pdnConsent").checked
+        comment: el("comment").value
       };
       localStorage.setItem(LS_FORM, JSON.stringify(obj));
     } catch(_) {}
@@ -1557,10 +1461,6 @@
       el("cardNotNeeded").checked = !!obj.cardNotNeeded;
       if (obj.cardText != null) el("cardText").value = obj.cardText;
       if (obj.comment != null) el("comment").value = obj.comment;
-      el("needCallback").checked = !!obj.needCallback;
-      el("clarifyAddressRecipient").checked = !!obj.clarifyAddressRecipient;
-      el("useBonuses").checked = !!obj.useBonuses;
-      el("pdnConsent").checked = !!obj.pdnConsent;
     } catch(_) {}
   }
 
@@ -1624,7 +1524,7 @@
 
     let finalAddress = address;
     if (delivery_type === "pickup"){
-      finalAddress = "самовывоз: автозаводская 23с2";
+      finalAddress = "Самовывоз: Автозаводская 23с2";
     }
 
     const card_not_needed = el("cardNotNeeded").checked;
@@ -1634,10 +1534,10 @@
       action: "create_order",
 
       // tg fields (если webapp открыт корректно)
-      tg_user_id: tgUser.id || 0,
-      tg_username: tgUser.username || "",
-      tg_first_name: tgUser.first_name || "",
-      tg_last_name: tgUser.last_name || "",
+      tg_user_id: 0,
+      tg_username: "",
+      tg_first_name: "",
+      tg_last_name: "",
 
       customer_name,
       customer_phone: normalizePhoneRU(customer_phone),
@@ -1656,16 +1556,24 @@
 
       card_not_needed,
       card_text,
-      comment: (el("comment").value || "").trim(),
-      need_callback: el("needCallback").checked,
-      clarify_address_recipient: el("clarifyAddressRecipient").checked,
-      use_bonuses: el("useBonuses").checked
+      comment: (el("comment").value || "").trim()
     };
 
-    if (!el("pdnConsent").checked){
-      showUX({ title:"согласие", text:"подтверди согласие на обработку персональных данных." });
-      return;
-    }
+    // Telegram WebApp context
+    try{
+      const tg = window.Telegram?.WebApp;
+      if (tg){
+        tg.ready();
+        tg.expand?.();
+        const u = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : null;
+        if (u){
+          payload.tg_user_id = u.id || 0;
+          payload.tg_username = u.username || "";
+          payload.tg_first_name = u.first_name || "";
+          payload.tg_last_name = u.last_name || "";
+        }
+      }
+    } catch(_) {}
 
     setSubmitLoading(true);
 
@@ -1688,10 +1596,6 @@
       }
 
       const orderId = json?.order_id || "";
-      if (json && typeof json.bonus_balance !== "undefined"){
-        bonusBalance = Number(json.bonus_balance || 0) || 0;
-        el("bonusHint").textContent = `бонусы: доступно ${fmt(bonusBalance)} · можно списать при покупке`;
-      }
 
       cart = new Map();
       recomputeCartCaches();
@@ -1789,7 +1693,7 @@
       if (t === "pickup"){
         el("address").value = "";
         el("address").disabled = true;
-        el("address").placeholder = "пример: самовывоз — автозаводская 23с2";
+        el("address").placeholder = "пример: самовывоз — Автозаводская 23с2";
       } else {
         el("address").disabled = false;
         el("address").placeholder = "пример: город, улица, дом, подъезд, квартира";
@@ -1823,18 +1727,6 @@
 
     el("cardText").addEventListener("input", saveFormDraft);
     el("comment").addEventListener("input", saveFormDraft);
-    el("useBonuses").addEventListener("change", () => { renderSummary(); saveFormDraft(); });
-    el("needCallback").addEventListener("change", saveFormDraft);
-    el("clarifyAddressRecipient").addEventListener("change", saveFormDraft);
-    el("pdnConsent").addEventListener("change", saveFormDraft);
-
-    el("privacyBtn").addEventListener("click", () => {
-      showUX({
-        title:"политика конфиденциальности",
-        text:"мы обрабатываем имя, телефон, адрес доставки и данные telegram только для оформления и подтверждения заказа. данные передаются менеджеру дарицветы.москва и не используются для сторонних рассылок. поддержка: 9:00–21:00 мск.",
-        actions:[{ text:"понятно", kind:"primary" }]
-      });
-    });
 
     attachPhoneMask("customerPhone");
     attachPhoneMask("recipientPhone");
@@ -1886,23 +1778,12 @@
       if (tg){
         tg.ready();
         tg.expand?.();
-        const u = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : null;
-        tgUser = {
-          id: u?.id || 0,
-          username: u?.username || "",
-          first_name: u?.first_name || "",
-          last_name: u?.last_name || ""
-        };
-        detectTheme();
         setAppHeight();
         tg.onEvent?.("viewportChanged", setAppHeight);
-        tg.onEvent?.("themeChanged", detectTheme);
       } else {
-        detectTheme();
         setAppHeight();
       }
     } catch(_) {
-      detectTheme();
       setAppHeight();
     }
     window.addEventListener("resize", setAppHeight);
@@ -1926,7 +1807,6 @@
       updateCheckoutButtons();
 
       initForm();
-      await loadBonusBalance();
     } catch (err){
       console.error(err);
       el("grid").innerHTML = `
